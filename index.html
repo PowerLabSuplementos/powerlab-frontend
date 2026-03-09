@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J626WB5LLP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-J626WB5LLP');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Power Lab Suplementos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <style>
+    :root {
+      --vermelho: #e8000d;
+      --vermelho-escuro: #b00008;
+      --cinza-bg: #1c1c1e;
+      --cinza-card: #252528;
+      --cinza-medio: #2e2e32;
+      --cinza-borda: #3a3a3e;
+      --branco: #ffffff;
+      --cinza-texto: #aaaaaa;
+      --amarelo: #ffd600;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--cinza-bg);
+      color: var(--branco);
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: #131315;
+      border-bottom: 3px solid var(--vermelho);
+      position: sticky;
+      top: 0;
+      z-index: 500;
+    }
+
+    .header-topo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px 20px;
+    }
+
+    .logo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--vermelho);
+      box-shadow: 0 0 20px #e8000d66;
+    }
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .header-title .nome {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2em;
+      font-weight: 900;
+      color: var(--branco);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .header-title .nome span {
+      color: var(--vermelho);
+    }
+
+    .header-title .sub {
+      font-size: 0.7em;
+      color: var(--cinza-texto);
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    /* ===== BANNER ===== */
+    .banner-section {
+      width: 100%;
+      height: 240px;
+      background:
+        linear-gradient(135deg,
+          #131315 0%,
+          #1e0406 35%,
+          #3a0208 60%,
+          #1e0406 80%,
+          #131315 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .banner-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 30px,
+          rgba(232,0,13,0.04) 30px,
+          rgba(232,0,13,0.04) 60px
+        );
+    }
+
+    .banner-section::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--vermelho), transparent);
+    }
+
+    .banner-tag {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85em;
+      font-weight: 700;
+      color: var(--vermelho);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      border: 1.5px solid var(--vermelho);
+      padding: 4px 16px;
+      border-radius: 2px;
+    }
+
+    .banner-titulo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 4em;
+      font-weight: 900;
+      color: var(--branco);
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      text-shadow: 0 0 40px #e8000d66, 0 4px 8px #00000088;
+      line-height: 1;
+    }
+
+    .banner-titulo span { color: var(--vermelho); }
+
+    .banner-sub {
+      font-size: 0.85em;
+      color: var(--cinza-texto);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ===== NAV ===== */
+    .nav-wrapper {
+      background: #131315;
+      border-bottom: 1px solid #2a2a2e;
+    }
+
+    nav {
+      display: flex;
+      gap: 4px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8px 20px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    nav::-webkit-scrollbar { display: none; }
+
+    nav button {
+      flex: 0 0 auto;
+      padding: 10px 20px;
+      background: transparent;
+      color: var(--cinza-texto);
+      border: 1.5px solid #3a3a3e;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.82em;
+      transition: all .2s;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1em;
+    }
+
+    nav button.active, nav button:hover {
+      background: var(--vermelho);
+      color: var(--branco);
+      border-color: var(--vermelho);
+      box-shadow: 0 0 14px #e8000d55;
+    }
+
+    /* ===== MAIN ===== */
+    main {
+      padding: 28px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--cinza-medio);
+      position: relative;
+    }
+
+    .section-header::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 80px;
+      height: 2px;
+      background: var(--vermelho);
+    }
+
+    .section-header h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.8em;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--branco);
+    }
+
+    .section-header h2 span { color: var(--vermelho); }
+
+    /* ===== GRID ===== */
+    .prod-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== CARD ===== */
+    .product-card {
+      background: var(--cinza-card);
+      border-radius: 8px;
+      border: 1px solid var(--cinza-borda);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-top-bar {
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--vermelho-escuro), var(--vermelho), #ff4444);
+    }
+
+    .product-card:hover {
+      border-color: var(--vermelho);
+      box-shadow:
+        0 8px 30px rgba(232,0,13,0.2),
+        0 2px 8px rgba(0,0,0,0.5);
+      transform: translateY(-3px);
+    }
+
+    .card-body {
+      padding: 18px 16px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .prod-img-wrapper {
+      position: relative;
+      width: 145px;
+      height: 145px;
+    }
+
+    .prod-img {
+      width: 145px;
+      height: 145px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid var(--cinza-borda);
+      background: #1a1a1c;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .product-card:hover .prod-img {
+      border-color: var(--vermelho);
+    }
+
+    .badge-esgotado {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1.2em;
+      letter-spacing: 2px;
+      color: #ff4444;
+      text-transform: uppercase;
+    }
+
+    .prod-nome {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15em;
+      color: var(--branco);
+      font-weight: 800;
+      margin: 14px 0 4px 0;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+    }
+
+    .prod-preco {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.8em;
+      color: var(--vermelho);
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .prod-parcelado {
+      font-size: 0.76em;
+      color: var(--cinza-texto);
+      margin-bottom: 6px;
+    }
+
+    .star-rating {
+      color: var(--amarelo);
+      font-size: 0.85em;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .prod-estoque {
+      font-size: 0.78em;
+      font-weight: 700;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ===== CONTROLES ===== */
+    .product-controls {
+      margin-top: 14px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quantity-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .quantity-btn {
+      background: var(--cinza-medio);
+      border: none;
+      color: var(--branco);
+      font-weight: 900;
+      width: 38px;
+      height: 36px;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: all .2s;
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    .quantity-btn:hover:not([disabled]) {
+      background: var(--vermelho);
+    }
+
+    .quantity-btn[disabled] { opacity: .3; cursor: not-allowed; }
+
+    .quantity-value {
+      flex: 1;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1em;
+      background: #1c1c1e;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--cinza-borda);
+      border-right: 1px solid var(--cinza-borda);
+    }
+
+    .add-cart-btn {
+      background: var(--vermelho);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.88em;
+      width: 100%;
+      transition: all .2s;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1em;
+    }
+
+    .add-cart-btn:hover:not([disabled]) {
+      background: var(--vermelho-escuro);
+      box-shadow: 0 4px 16px #e8000d55;
+    }
+
+    .add-cart-btn[disabled] {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .details-btn {
+      background: transparent;
+      color: var(--cinza-texto);
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 6px;
+      padding: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.88em;
+      width: 100%;
+      transition: all .2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.95em;
+    }
+
+    .details-btn:hover {
+      border-color: var(--vermelho);
+      color: var(--vermelho);
+    }
+
+    /* ===== CARRINHO ===== */
+    #cart-button {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--vermelho);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 4px 20px #e8000d66;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95em;
+      transition: all 0.2s;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1em;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    #cart-button:hover {
+      background: var(--vermelho-escuro);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 26px #e8000d88;
+    }
+
+    #cart {
+      position: fixed;
+      right: 28px;
+      bottom: 90px;
+      background: #131315;
+      border: 1.5px solid var(--vermelho);
+      padding: 20px;
+      width: 380px;
+      max-height: 70vh;
+      overflow-y: auto;
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(232,0,13,0.2), 0 8px 40px #00000088;
+      z-index: 999;
+    }
+
+    #cart::-webkit-scrollbar { width: 4px; }
+    #cart::-webkit-scrollbar-track { background: #1c1c1e; }
+    #cart::-webkit-scrollbar-thumb { background: var(--vermelho); border-radius: 2px; }
+
+    #cart h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      color: var(--branco);
+      font-size: 1.4em;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #2a2a2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hidden { display: none; }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #2a2a2e;
+      gap: 10px;
+    }
+
+    .cart-item-info { flex: 1; }
+
+    .cart-item-info .nome {
+      font-weight: 700;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .cart-item-info .valor {
+      font-size: 0.82em;
+      color: var(--vermelho);
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .cart-item-remove {
+      background: transparent;
+      color: #666;
+      border: 1px solid #333;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.85em;
+      transition: all .2s;
+    }
+
+    .cart-item-remove:hover {
+      background: var(--vermelho);
+      color: #fff;
+      border-color: var(--vermelho);
+    }
+
+    #total {
+      margin: 16px 0 10px 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.5em;
+      font-weight: 900;
+      color: var(--branco);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .email-input {
+      width: 100%;
+      padding: 11px 14px;
+      margin: 8px 0;
+      background: #1c1c1e;
+      border: 1.5px solid #3a3a3e;
+      border-radius: 6px;
+      font-size: 0.9em;
+      color: var(--branco);
+      font-family: 'Montserrat', sans-serif;
+      transition: border-color .2s;
+    }
+
+    .email-input:focus {
+      outline: none;
+      border-color: var(--vermelho);
+    }
+
+    .email-input::placeholder { color: #555; }
+
+    .action-button {
+      padding: 12px;
+      width: 100%;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      margin-bottom: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1em;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .confirm-button {
+      background: #1a8a3a;
+      color: white;
+      border: 1.5px solid #2ecc71;
+    }
+
+    .confirm-button:hover { background: #166b2d; }
+
+    .mp-button {
+      background: #0077b6;
+      color: white;
+      border: 1.5px solid #009ee3;
+    }
+
+    .mp-button:hover { background: #005f8e; }
+
+    .cancel-button {
+      background: transparent;
+      color: #666;
+      border: 1.5px solid #333;
+    }
+
+    .cancel-button:hover { color: #fff; border-color: #555; }
+
+    .error { color: #ff4444; font-size: 0.85em; margin: 6px 0; font-weight: 600; }
+
+    /* ===== PAYMENT STATUS ===== */
+    .payment-status {
+      padding: 14px;
+      margin: 0 0 20px 0;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 700;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1em;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .payment-success { background: #0d2e1a; color: #2ecc71; border: 1px solid #2ecc71; }
+    .payment-failure { background: #2e0d0d; color: #ff4444; border: 1px solid #ff4444; }
+    .payment-pending { background: #2e260d; color: #ffd600; border: 1px solid #ffd600; }
+
+    /* ===== MODALS ===== */
+    #modal-img-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modal-img-close {
+      position: absolute;
+      top: 20px; right: 30px;
+      font-size: 2.5em;
+      color: #fff;
+      cursor: pointer;
+      z-index: 10000;
+    }
+
+    #modal-img-view {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: 8px;
+      border: 2px solid var(--vermelho);
+    }
+
+    #modal-produto-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.88);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modal-produto-card {
+      background: var(--cinza-card);
+      border: 1.5px solid var(--vermelho);
+      border-radius: 10px;
+      padding: 36px 28px 28px 28px;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 8px 40px rgba(232,0,13,0.3);
+      position: relative;
+      text-align: center;
+    }
+
+    #modal-produto-card img {
+      width: 180px;
+      height: 180px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid var(--vermelho);
+    }
+
+    #modal-produto-card .prod-nome {
+      font-size: 1.3em;
+      margin: 14px 0 4px 0;
+    }
+
+    #modal-produto-card .prod-preco {
+      font-size: 1.6em;
+    }
+
+    #modal-produto-close {
+      position: absolute;
+      top: 12px; right: 16px;
+      font-size: 2em;
+      color: var(--vermelho);
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .modal-desc {
+      font-size: 0.88em;
+      color: var(--cinza-texto);
+      margin: 14px 0 8px 0;
+      line-height: 1.6;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-cart {
+      text-align: center;
+      color: #555;
+      padding: 50px 20px;
+      font-style: italic;
+      grid-column: 1 / -1;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: #0e0e10;
+      text-align: center;
+      padding: 36px 20px 20px 20px;
+      border-top: 3px solid var(--vermelho);
+      margin-top: 50px;
+    }
+
+    .footer-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.8em;
+      font-weight: 900;
+      color: var(--branco);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      margin-bottom: 4px;
+    }
+
+    .footer-logo span { color: var(--vermelho); }
+
+    .footer-endereco {
+      font-size: 0.85em;
+      color: #555;
+      margin-bottom: 18px;
+    }
+
+    .footer-social { margin-bottom: 14px; }
+
+    .footer-social a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      margin: 0 5px;
+      color: #555;
+      font-size: 1.3em;
+      border: 1.5px solid #333;
+      border-radius: 6px;
+      transition: all .2s;
+    }
+
+    .footer-social a:hover {
+      background: var(--vermelho);
+      color: #fff;
+      border-color: var(--vermelho);
+    }
+
+    .footer-copy {
+      font-size: 0.78em;
+      color: #444;
+      margin-top: 12px;
+    }
+
+    /* ===== WHATSAPP FLOAT ===== */
+    #whatsapp-float {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: #25d366;
+      color: #fff;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      box-shadow: 0 4px 16px #25d36655;
+      z-index: 1100;
+      transition: all .2s;
+    }
+
+    #whatsapp-float:hover {
+      background: #128c7e;
+      transform: translateY(-2px);
+    }
+
+    /* ===== MSG CARRINHO ===== */
+    #msg-ok-carrinho {
+      display: none;
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      z-index: 2000;
+      background: var(--vermelho);
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1em;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 20px #e8000d55;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .banner-titulo { font-size: 2.8em; }
+      .banner-section { height: 180px; }
+    }
+
+    @media (max-width: 600px) {
+      .header-title .nome { font-size: 1.5em; }
+      .logo-img { width: 52px; height: 52px; }
+      .banner-section { height: 140px; }
+      .banner-titulo { font-size: 2em; }
+      .banner-sub { font-size: 0.7em; }
+      nav button { font-size: 0.88em; padding: 8px 14px; }
+      main { padding: 16px 10px; }
+      .prod-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
+      .prod-img, .prod-img-wrapper { width: 110px; height: 110px; }
+      #cart { width: 98vw; left: 1vw; right: 1vw; bottom: 80px; }
+      #cart-button { bottom: 16px; right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-topo">
+      <div class="logo-wrapper">
+        <img src="logo-powerlab.png" class="logo-img" alt="Power Lab"
+          onerror="this.style.display='none'">
+        <div class="header-title">
+          <div class="nome">Power <span>Lab</span></div>
+          <div class="sub">Suplementos Premium</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner-section">
+      <div class="banner-tag">⚡ Performance &amp; Resultados</div>
+      <div class="banner-titulo">Power <span>Lab</span></div>
+      <div class="banner-sub">Suplementos de Alta Performance</div>
+    </div>
+
+    <div class="nav-wrapper">
+      <nav id="menu-nav">
+        <button data-category="proteinas" class="active">🥛 Proteínas</button>
+        <button data-category="pretreinos">⚡ Pré-treinos</button>
+        <button data-category="vitaminas">💊 Vitaminas</button>
+        <button data-category="emagrecedores">🔥 Emagrecedores</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div id="payment-status" class="hidden"></div>
+
+    <div class="section-header">
+      <h2 id="titulo-categoria">Proteínas</h2>
+    </div>
+
+    <div class="prod-grid" id="product-list">
+      <p class="empty-cart">Carregando produtos...</p>
+    </div>
+  </main>
+
+  <div id="cart-button" onclick="openCart()">
+    🛒 Carrinho (<span id="cart-count">0</span>)
+  </div>
+
+  <div id="cart" class="hidden">
+    <h2>🛒 Carrinho</h2>
+    <div id="cart-items"></div>
+    <div id="cart-error" class="error"></div>
+    <div id="total">Total: R$ 0,00</div>
+    <input type="email" id="customer-email" class="email-input"
+      placeholder="Seu e-mail para confirmação" required>
+    <button onclick="sendWhatsApp()" class="action-button confirm-button">
+      <i class="fab fa-whatsapp"></i> Finalizar no WhatsApp
+    </button>
+    <button onclick="pagarComMercadoPago()" class="action-button mp-button">
+      <i class="fa-brands fa-pix"></i> Pagar com Mercado Pago
+    </button>
+    <button onclick="closeCart()" class="action-button cancel-button">Fechar</button>
+  </div>
+
+  <div id="modal-img-bg" style="display:none; align-items:center; justify-content:center;">
+    <span id="modal-img-close">&times;</span>
+    <img id="modal-img-view" src="">
+  </div>
+
+  <div id="modal-produto-bg" style="display:none; align-items:center; justify-content:center;">
+    <div id="modal-produto-card"></div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">Power <span>Lab</span> Suplementos</div>
+    <div class="footer-endereco">
+      <i class="fas fa-map-marker-alt"></i> Juazeiro - BA
+    </div>
+    <div class="footer-social">
+      <a href="https://wa.me/5574981180566" target="_blank"><i class="fab fa-whatsapp"></i></a>
+      <a href="https://www.instagram.com/powerlabsuplementos/" target="_blank"><i class="fab fa-instagram"></i></a>
+    </div>
+    <div class="footer-copy">© 2026 Power Lab Suplementos. Todos os direitos reservados.</div>
+  </footer>
+
+  <a href="https://wa.me/5574981180566" target="_blank" id="whatsapp-float">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+
+  <div id="msg-ok-carrinho">✅ Adicionado ao carrinho!</div>
+
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+  <script>
+    const mp = new MercadoPago('APP_USR-2cf8bb64-1d8a-4bb2-802b-6f2ef8331d61', { locale: 'pt-BR' });
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const BASE_URL = isLocal ? 'http://localhost:3000' : 'https://powerlab-backend.vercel.app';
+    const PRODUCTS_API_URL = `${BASE_URL}/api/produtos`;
+    const CREATE_PREFERENCE_API_URL = `${BASE_URL}/api/create_preference`;
+
+    const CATEGORIAS = {
+      proteinas:     'Proteínas',
+      pretreinos:    'Pré-treinos e Energéticos',
+      vitaminas:     'Vitaminas e Minerais',
+      emagrecedores: 'Emagrecedores e Termogênicos'
+    };
+
+    let produtos = [];
+    let cart = [];
+    let selectedQty = {};
+    let categoriaAtiva = 'proteinas';
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch(PRODUCTS_API_URL);
+        if (!res.ok) throw new Error(res.statusText);
+        produtos = await res.json();
+        filterMenu(categoriaAtiva);
+      } catch (e) {
+        document.getElementById('product-list').innerHTML =
+          '<p class="empty-cart" style="color:#ff4444;">Erro ao carregar produtos. Tente novamente.</p>';
+      }
+    }
+
+    function normalize(str) {
+      return (str || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function filterMenu(category) {
+      categoriaAtiva = category;
+      document.getElementById('titulo-categoria').textContent = CATEGORIAS[category] || category;
+
+      const filtered = produtos.filter(p => {
+        const cat = normalize(p.categoria);
+        const fc  = normalize(category);
+        return cat.includes(fc) || fc.includes(cat);
+      });
+
+      const list = document.getElementById('product-list');
+      list.innerHTML = '';
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<p class="empty-cart">Nenhum produto disponível nesta categoria.</p>';
+        return;
+      }
+
+      filtered.forEach(p => {
+        const id = String(p.id || `tmp-${Math.random().toString(36).substr(2,6)}`);
+        if (selectedQty[id] === undefined) selectedQty[id] = 1;
+        const esgotado = p.estoque !== undefined && p.estoque <= 0;
+        const parcelado = `3x R$ ${(p.preco / 3).toFixed(2).replace('.', ',')}`;
+
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        div.innerHTML = `
+          <div class="card-top-bar"></div>
+          <div class="card-body">
+            <div class="prod-img-wrapper">
+              <img src="${p.imgurl || 'https://placehold.co/145x145/1c1c1e/e8000d?text=+'}"
+                class="prod-img" alt="${p.nome}">
+              ${esgotado ? '<div class="badge-esgotado">Esgotado</div>' : ''}
+            </div>
+            <div class="prod-nome">${p.nome}</div>
+            <div class="prod-preco">R$ ${p.preco.toFixed(2).replace('.', ',')}</div>
+            <div class="prod-parcelado">ou ${parcelado} sem juros</div>
+            <div class="star-rating">★★★★★</div>
+            <div class="product-controls">
+              <div class="quantity-row">
+                <button class="quantity-btn"
+                  onclick="changeQty('${id}', -1)"
+                  ${esgotado || selectedQty[id] <= 1 ? 'disabled' : ''}>−</button>
+                <span class="quantity-value" id="qty-value-${id}">${selectedQty[id]}</span>
+                <button class="quantity-btn"
+                  onclick="changeQty('${id}', 1)"
+                  ${esgotado || selectedQty[id] >= p.estoque ? 'disabled' : ''}>+</button>
+              </div>
+              ${esgotado
+                ? `<button class="add-cart-btn" disabled>Esgotado</button>`
+                : `<button class="add-cart-btn" onclick="addToCart('${id}')">
+                    <i class="fas fa-cart-plus"></i> Adicionar
+                   </button>`
+              }
+              <button class="details-btn" onclick="openModalProduto('${id}')">
+                <i class="fas fa-info-circle"></i> Ver Detalhes
+              </button>
+            </div>
+            <div class="prod-estoque" style="color:${esgotado ? '#ff4444' : '#2ecc71'};">
+              ${esgotado ? '❌ Esgotado' : `✅ Em estoque: ${p.estoque}`}
+            </div>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    window.changeQty = function(id, delta) {
+      const p = produtos.find(x => x.id === id);
+      if (!p || p.estoque <= 0) return;
+      selectedQty[id] = Math.max(1, Math.min(p.estoque, (selectedQty[id] || 1) + delta));
+      document.getElementById(`qty-value-${id}`).innerText = selectedQty[id];
+    }
+
+    window.addToCart = function(id) {
+      const item = produtos.find(p => p.id === id);
+      if (!item) return;
+      const qty = selectedQty[id] || 1;
+      const existing = cart.find(p => p.id === id);
+      const inCart = existing ? existing.qty : 0;
+      if (qty + inCart > item.estoque) { alert('Estoque insuficiente.'); return; }
+      if (existing) { existing.qty += qty; } else { cart.push({ ...item, qty }); }
+      updateCartIcon();
+      safeRenderCart();
+      showMsgOkCarrinho();
+    }
+
+    function updateCartIcon() {
+      document.getElementById('cart-count').innerText = cart.reduce((a, b) => a + b.qty, 0);
+    }
+
+    function openCart() {
+      document.getElementById('cart').classList.remove('hidden');
+      safeRenderCart();
+    }
+
+    function closeCart() {
+      document.getElementById('cart').classList.add('hidden');
+      document.getElementById('cart-error').innerText = '';
+    }
+
+    function removeItemCompletely(id) {
+      cart = cart.filter(i => i.id !== id);
+      updateCartIcon();
+      safeRenderCart();
+    }
+
+    function safeRenderCart() {
+      const el = document.getElementById('cart-items');
+      el.innerHTML = '';
+      if (cart.length === 0) {
+        el.innerHTML = '<p class="empty-cart">Seu carrinho está vazio</p>';
+        document.getElementById('total').innerText = 'Total: R$ 0,00';
+        return;
+      }
+      let subtotal = 0;
+      cart.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div class="cart-item-info">
+            <div class="nome">${item.qty}x ${item.nome}</div>
+            <div class="valor">R$ ${(item.qty * item.preco).toFixed(2).replace('.', ',')}</div>
+          </div>
+          <button onclick="removeItemCompletely('${item.id}')" class="cart-item-remove">
+            <i class="fas fa-trash"></i>
+          </button>
+        `;
+        el.appendChild(div);
+        subtotal += item.qty * item.preco;
+      });
+      document.getElementById('total').innerHTML =
+        `TOTAL: R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+    }
+
+    function sendWhatsApp() {
+      if (!cart.length) { document.getElementById('cart-error').innerText = 'Carrinho vazio.'; return; }
+      const email = document.getElementById('customer-email').value;
+      if (!email) { document.getElementById('cart-error').innerText = 'Informe seu e-mail.'; return; }
+      const subtotal = cart.reduce((a, b) => a + b.qty * b.preco, 0);
+      const itens = cart.map(i => `${i.qty}x ${i.nome} - R$ ${(i.qty * i.preco).toFixed(2).replace('.', ',')}`).join('\n');
+      let msg = `*PEDIDO - POWER LAB SUPLEMENTOS*\n\n*Itens:*\n${itens}\n\n*Total: R$ ${subtotal.toFixed(2).replace('.', ',')}*\n\n*E-mail:* ${email}\n\nGostaria de finalizar minha compra! 💪`;
+      window.open(`https://wa.me/5574981180566?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    async function pagarComMercadoPago() {
+      if (!cart.length) { document.getElementById('cart-error').innerText = 'Carrinho vazio.'; return; }
+      const email = document.getElementById('customer-email').value;
+      if (!email) { document.getElementById('cart-error').innerText = 'Informe seu e-mail.'; return; }
+      const btn = document.querySelector('.mp-button');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+      btn.disabled = true;
+      try {
+        const res = await fetch(CREATE_PREFERENCE_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cartItems: cart.map(i => ({ id: i.id, name: i.nome, price: parseFloat(i.preco), quantity: parseInt(i.qty), description: i.descricao || '', imgurl: i.imgurl || '' })),
+            payerEmail: email
+          })
+        });
+        if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || res.statusText); }
+        const data = await res.json();
+        if (data.init_point) { window.location.href = data.init_point; }
+        else throw new Error('Link não gerado');
+      } catch (e) {
+        document.getElementById('cart-error').innerText = 'Erro: ' + e.message;
+        btn.innerHTML = '<i class="fa-brands fa-pix"></i> Pagar com Mercado Pago';
+        btn.disabled = false;
+      }
+    }
+
+    document.body.addEventListener('click', function(e) {
+      if (e.target.classList.contains('prod-img')) {
+        document.getElementById('modal-img-view').src = e.target.src;
+        document.getElementById('modal-img-bg').style.display = 'flex';
+      }
+      if (['modal-img-bg','modal-img-close'].includes(e.target.id))
+        document.getElementById('modal-img-bg').style.display = 'none';
+      if (['modal-produto-bg','modal-produto-close'].includes(e.target.id))
+        document.getElementById('modal-produto-bg').style.display = 'none';
+    });
+
+    window.openModalProduto = function(id) {
+      const p = produtos.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('modal-produto-card').innerHTML = `
+        <span id="modal-produto-close">&times;</span>
+        <img src="${p.imgurl || 'https://placehold.co/180x180/1c1c1e/e8000d?text=+'}" alt="${p.nome}">
+        <div class="prod-nome">${p.nome}</div>
+        <div class="prod-preco">R$ ${p.preco.toFixed(2).replace('.', ',')}</div>
+        <div class="star-rating">★★★★★</div>
+        <div class="modal-desc">${p.descricao || 'Suplemento de alta performance Power Lab.'}</div>
+        <div class="prod-estoque" style="color:${p.estoque > 0 ? '#2ecc71' : '#ff4444'}; margin-top:10px; font-weight:700;">
+          ${p.estoque > 0 ? `✅ Em estoque: ${p.estoque}` : '❌ Esgotado'}
+        </div>
+      `;
+      document.getElementById('modal-produto-bg').style.display = 'flex';
+    }
+
+    function checkPaymentStatus() {
+      const p = new URLSearchParams(window.location.search).get('payment');
+      const el = document.getElementById('payment-status');
+      if (p === 'success') {
+        el.className = 'payment-status payment-success';
+        el.innerHTML = '✅ Pagamento aprovado! Seu pedido está sendo processado.';
+        el.classList.remove('hidden'); cart = []; updateCartIcon();
+      } else if (p === 'failure') {
+        el.className = 'payment-status payment-failure';
+        el.innerHTML = '❌ Pagamento recusado. Tente novamente.';
+        el.classList.remove('hidden');
+      } else if (p === 'pending') {
+        el.className = 'payment-status payment-pending';
+        el.innerHTML = '⏳ Pagamento pendente. Aguardando confirmação.';
+        el.classList.remove('hidden');
+      }
+    }
+
+    function showMsgOkCarrinho() {
+      const msg = document.getElementById('msg-ok-carrinho');
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', 1500);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      checkPaymentStatus();
+      updateCartIcon();
+      document.querySelectorAll('nav button').forEach(btn => {
+        btn.onclick = function() {
+          document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          filterMenu(this.getAttribute('data-category'));
+        }
+      });
+      fetchProducts();
+    });
+  </script>
+</body>
+</html>
