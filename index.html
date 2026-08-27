@@ -45,21 +45,6 @@
       z-index: 500;
     }
 
-    .header-topo {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 12px 20px;
-    }
-
-    .logo-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
     .logo-img {
       width: 64px;
       height: 64px;
@@ -69,31 +54,11 @@
       box-shadow: 0 0 20px #e8000d66;
     }
 
-    .header-title {
+    .banner-logo-row {
       display: flex;
-      flex-direction: column;
-      line-height: 1;
-    }
-
-    .header-title .nome {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 2em;
-      font-weight: 900;
-      color: var(--branco);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-    }
-
-    .header-title .nome span {
-      color: var(--vermelho);
-    }
-
-    .header-title .sub {
-      font-size: 0.7em;
-      color: var(--cinza-texto);
-      font-weight: 600;
-      letter-spacing: 4px;
-      text-transform: uppercase;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
     }
 
     /* ===== BANNER ===== */
@@ -868,8 +833,8 @@
     }
 
     @media (max-width: 600px) {
-      .header-title .nome { font-size: 1.5em; }
       .logo-img { width: 52px; height: 52px; }
+      .banner-logo-row { gap: 10px; }
       .banner-section { height: 140px; }
       .banner-titulo { font-size: 2em; }
       .banner-sub { font-size: 0.7em; }
@@ -885,20 +850,13 @@
 <body>
 
   <header>
-    <div class="header-topo">
-      <div class="logo-wrapper">
-        <img src="logo-powerlab.png" class="logo-img" alt="Power Lab"
-          onerror="this.style.display='none'">
-        <div class="header-title">
-          <div class="nome">Power <span>Lab</span></div>
-          <div class="sub">Suplementos Premium</div>
-        </div>
-      </div>
-    </div>
-
     <div class="banner-section">
       <div class="banner-tag">⚡ Performance &amp; Resultados</div>
-      <div class="banner-titulo">Power <span>Lab</span></div>
+      <div class="banner-logo-row">
+        <img src="logo-powerlab.png" class="logo-img" alt="Power Lab"
+          onerror="this.style.display='none'">
+        <div class="banner-titulo">Power <span>Lab</span></div>
+      </div>
       <div class="banner-sub">Suplementos de Alta Performance</div>
     </div>
 
