@@ -40,14 +40,11 @@
     header {
       background: #131315;
       border-bottom: 3px solid var(--vermelho);
-      position: sticky;
-      top: 0;
-      z-index: 500;
     }
 
     .logo-img {
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       object-fit: cover;
       border: 3px solid var(--vermelho);
@@ -64,7 +61,7 @@
     /* ===== BANNER ===== */
     .banner-section {
       width: 100%;
-      height: 240px;
+      height: 170px;
       background:
         linear-gradient(135deg,
           #131315 0%,
@@ -117,7 +114,7 @@
 
     .banner-titulo {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 4em;
+      font-size: 3.2em;
       font-weight: 900;
       color: var(--branco);
       text-transform: uppercase;
@@ -140,6 +137,9 @@
     .nav-wrapper {
       background: #131315;
       border-bottom: 1px solid #2a2a2e;
+      position: sticky;
+      top: 0;
+      z-index: 500;
     }
 
     nav {
@@ -828,16 +828,18 @@
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 900px) {
-      .banner-titulo { font-size: 2.8em; }
-      .banner-section { height: 180px; }
+      .logo-img { width: 48px; height: 48px; }
+      .banner-titulo { font-size: 2.4em; }
+      .banner-section { height: 130px; }
     }
 
     @media (max-width: 600px) {
-      .logo-img { width: 52px; height: 52px; }
-      .banner-logo-row { gap: 10px; }
-      .banner-section { height: 140px; }
-      .banner-titulo { font-size: 2em; }
-      .banner-sub { font-size: 0.7em; }
+      .logo-img { width: 38px; height: 38px; }
+      .banner-logo-row { gap: 8px; }
+      .banner-section { height: 96px; gap: 5px; }
+      .banner-tag { font-size: 0.6em; letter-spacing: 3px; padding: 3px 10px; }
+      .banner-titulo { font-size: 1.7em; letter-spacing: 3px; }
+      .banner-sub { font-size: 0.62em; letter-spacing: 2px; }
       nav button { font-size: 0.88em; padding: 8px 14px; }
       main { padding: 16px 10px; }
       .prod-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; }
@@ -857,7 +859,7 @@
           onerror="this.style.display='none'">
         <div class="banner-titulo">Power <span>Lab</span></div>
       </div>
-      <div class="banner-sub">Suplementos de Alta Performance</div>
+      <div class="banner-sub">Sua Evolução Começa Aqui</div>
     </div>
 
     <div class="nav-wrapper">
