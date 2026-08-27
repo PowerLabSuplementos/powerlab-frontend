@@ -787,10 +787,10 @@
     <div class="login-card">
       <h2>Power <span>Lab</span></h2>
       <p>Painel Administrativo</p>
-      <input type="text" id="login-user" class="login-input" placeholder="Usuário" />
-      <input type="password" id="login-pass" class="login-input" placeholder="Senha"
+      <input type="email" id="login-user" class="login-input" placeholder="E-mail" autocomplete="username" />
+      <input type="password" id="login-pass" class="login-input" placeholder="Senha" autocomplete="current-password"
         onkeydown="if(event.key==='Enter') fazerLogin()" />
-      <button class="btn-login" onclick="fazerLogin()">
+      <button class="btn-login" id="btn-login" onclick="fazerLogin()">
         <i class="fas fa-sign-in-alt"></i> Entrar
       </button>
       <div class="login-erro" id="login-erro"></div>
@@ -1003,6 +1003,8 @@
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { getStorage, ref, uploadBytesResumable, getDownloadURL }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     // ===== CONFIGURAÇÃO FIREBASE =====
     const firebaseConfig = {
@@ -1018,27 +1020,45 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
+    const auth = getAuth(app);
 
-    // ===== AUTH SIMPLES =====
-    const USUARIOS = {
-      'admin': 'powerlab@2026'
-    };
-
-    window.fazerLogin = function() {
-      const user = document.getElementById('login-user').value.trim();
-      const pass = document.getElementById('login-pass').value.trim();
-      if (USUARIOS[user] && USUARIOS[user] === pass) {
+    // ===== AUTH REAL (Firebase Authentication) =====
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
         document.getElementById('tela-login').style.display = 'none';
         document.getElementById('tela-admin').style.display = 'block';
         carregarProdutos();
       } else {
-        document.getElementById('login-erro').textContent = '❌ Usuário ou senha incorretos.';
+        document.getElementById('tela-login').style.display = 'flex';
+        document.getElementById('tela-admin').style.display = 'none';
+      }
+    });
+
+    window.fazerLogin = async function() {
+      const email = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-pass').value.trim();
+      const erroEl = document.getElementById('login-erro');
+      const btn = document.getElementById('btn-login');
+      erroEl.textContent = '';
+      if (!email || !pass) {
+        erroEl.textContent = '❌ Informe e-mail e senha.';
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        // onAuthStateChanged cuida de exibir o painel
+      } catch (e) {
+        erroEl.textContent = '❌ E-mail ou senha incorretos.';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
       }
     }
 
-    window.sair = function() {
-      document.getElementById('tela-login').style.display = 'flex';
-      document.getElementById('tela-admin').style.display = 'none';
+    window.sair = async function() {
+      await signOut(auth);
       document.getElementById('login-user').value = '';
       document.getElementById('login-pass').value = '';
     }
