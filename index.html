@@ -855,6 +855,79 @@
 
     .footer-copy { font-size: 0.78em; color: #555; margin-top: 18px; }
 
+    .footer-ajuda {
+      max-width: 720px;
+      margin: 22px auto 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 22px;
+    }
+    .ajuda-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #bdbdbd;
+      font-size: 0.86em;
+    }
+    .ajuda-tip { position: relative; display: inline-flex; }
+    .ajuda-icone {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid #666;
+      background: transparent;
+      color: #bdbdbd;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: help;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-family: inherit;
+    }
+    .ajuda-tip:hover .ajuda-icone, .ajuda-icone:focus-visible {
+      border-color: var(--vermelho);
+      color: #fff;
+      background: var(--vermelho);
+      outline: none;
+    }
+    .ajuda-caixa {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(240px, 78vw);
+      background: #fff;
+      color: #222;
+      text-align: left;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      padding: 10px 12px;
+      border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease;
+      z-index: 50;
+      pointer-events: none;
+    }
+    .ajuda-caixa::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #fff;
+    }
+    .ajuda-tip:hover .ajuda-caixa, .ajuda-tip:focus-within .ajuda-caixa {
+      opacity: 1;
+      visibility: visible;
+    }
+
     #whatsapp-float {
       position: fixed;
       bottom: 24px;
@@ -1071,6 +1144,44 @@
         <h3>Trocas e devoluções</h3>
         <p>Se o produto chegar com defeito, avaria ou diferente do pedido, fale no WhatsApp para combinar a troca ou a devolução. Compra feita pelo site pode ser cancelada em até 7 dias após o recebimento, pelo Código de Defesa do Consumidor.</p>
       </section>
+    </div>
+    <div class="footer-ajuda" aria-label="Informações de compra">
+      <span class="ajuda-item">Pagamento seguro
+        <span class="ajuda-tip">
+          <button type="button" class="ajuda-icone" aria-label="Saiba mais: Pagamento seguro" aria-describedby="ajuda-0">?</button>
+          <span class="ajuda-caixa" role="tooltip" id="ajuda-0">Os pagamentos são processados pelo Asaas, instituição de pagamento autorizada. A Power Lab não vê nem guarda os dados do seu cartão.</span>
+        </span>
+      </span>
+      <span class="ajuda-item">Pix
+        <span class="ajuda-tip">
+          <button type="button" class="ajuda-icone" aria-label="Saiba mais: Pix" aria-describedby="ajuda-1">?</button>
+          <span class="ajuda-caixa" role="tooltip" id="ajuda-1">A aprovação é rápida. Assim que o Pix é confirmado, seu pedido aparece como pago e entra em separação.</span>
+        </span>
+      </span>
+      <span class="ajuda-item">Boleto
+        <span class="ajuda-tip">
+          <button type="button" class="ajuda-icone" aria-label="Saiba mais: Boleto" aria-describedby="ajuda-2">?</button>
+          <span class="ajuda-caixa" role="tooltip" id="ajuda-2">O boleto pode levar até 3 dias úteis para compensar. O pedido é separado depois da confirmação do pagamento.</span>
+        </span>
+      </span>
+      <span class="ajuda-item">Cartão de crédito
+        <span class="ajuda-tip">
+          <button type="button" class="ajuda-icone" aria-label="Saiba mais: Cartão de crédito" aria-describedby="ajuda-3">?</button>
+          <span class="ajuda-caixa" role="tooltip" id="ajuda-3">Pagamento feito em ambiente seguro do Asaas. A aprovação costuma sair em poucos minutos.</span>
+        </span>
+      </span>
+      <span class="ajuda-item">Retirada na loja
+        <span class="ajuda-tip">
+          <button type="button" class="ajuda-icone" aria-label="Saiba mais: Retirada na loja" aria-describedby="ajuda-4">?</button>
+          <span class="ajuda-caixa" role="tooltip" id="ajuda-4">Retire seu pedido grátis na loja física em Juazeiro-BA depois da confirmação do pagamento.</span>
+        </span>
+      </span>
+      <span class="ajuda-item">Dúvidas
+        <span class="ajuda-tip">
+          <button type="button" class="ajuda-icone" aria-label="Saiba mais: Dúvidas" aria-describedby="ajuda-5">?</button>
+          <span class="ajuda-caixa" role="tooltip" id="ajuda-5">Fale com a gente pelo WhatsApp (74) 99913-8625 e responderemos o mais rápido possível.</span>
+        </span>
+      </span>
     </div>
     <p class="footer-copy">© <span id="footer-year"></span> Power Lab Suplementos. Todos os direitos reservados.</p>
   </footer>
