@@ -1137,10 +1137,6 @@
     <div class="footer-social" id="footer-social"></div>
     <div class="footer-policies">
       <section>
-        <h3>Entrega e retirada</h3>
-        <p id="policy-entrega">Retirada na loja em Juazeiro-BA é grátis.</p>
-      </section>
-      <section>
         <h3>Trocas e devoluções</h3>
         <p>Se o produto chegar com defeito, avaria ou diferente do pedido, fale no WhatsApp para combinar a troca ou a devolução. Compra feita pelo site pode ser cancelada em até 7 dias após o recebimento, pelo Código de Defesa do Consumidor.</p>
       </section>
@@ -1456,8 +1452,6 @@
         ? 'Sem taxa. Retire em ' + endereco + '.'
         : 'Sem taxa de entrega.';
       const onde = endereco ? ' em ' + endereco : ' em ' + CONFIG.cidade;
-      document.getElementById('policy-entrega').textContent =
-        'Retirada na loja' + onde + ' é grátis. Na entrega, a taxa mostrada no checkout é uma estimativa pelo trajeto. Quando a distância não é calculada, a taxa é confirmada pelo WhatsApp.';
       document.getElementById('footer-year').textContent = String(new Date().getFullYear());
 
       const social = document.getElementById('footer-social');
