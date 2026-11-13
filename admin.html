@@ -770,12 +770,150 @@
 
     .modal-actions { display: flex; gap: 10px; justify-content: center; }
 
+    .period-bar, .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+      align-items: center;
+    }
+
+    .period-btn, .chip {
+      background: #1c1c1e;
+      color: var(--cinza-texto);
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.95em;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .period-btn.active, .chip.active {
+      background: var(--vermelho);
+      border-color: var(--vermelho);
+      color: #fff;
+    }
+
+    .delta { font-size: 0.78em; font-weight: 700; letter-spacing: 0; text-transform: none; }
+    .delta.up { color: var(--verde); }
+    .delta.down { color: #ff6b6b; }
+    .delta.flat { color: var(--cinza-texto); }
+
+    .chart-card, .rank-card, .detail-card, .settings-card {
+      background: var(--cinza-card);
+      border: 1px solid var(--cinza-borda);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .chart-card { min-height: 300px; }
+    .chart-card canvas { width: 100% !important; height: 240px !important; }
+
+    .rank-grid, .split {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .rank-row, .client-row, .order-row {
+      display: grid;
+      gap: 8px;
+      padding: 12px 0;
+      border-bottom: 1px solid #2a2a2e;
+      align-items: center;
+    }
+
+    .rank-row { grid-template-columns: 28px 1fr auto; }
+    .order-row { grid-template-columns: 1fr; cursor: pointer; }
+    .client-row { grid-template-columns: 1fr; }
+
+    .status-pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-size: 0.72em;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      border: 1px solid currentColor;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: #c8c8c8;
+      line-height: 1.5;
+    }
+
+    .empty-state strong {
+      display: block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.4em;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .demo-banner {
+      background: #2e260d;
+      color: var(--amarelo);
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 0.82em;
+      border-bottom: 1px solid var(--amarelo);
+    }
+
+    .detail-grid { display: grid; gap: 8px; font-size: 0.9em; }
+    .detail-grid a { color: #25d366; }
+    .fulfil-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .table-scroll { overflow-x: auto; }
+    .stock-actions { display: flex; gap: 6px; align-items: center; }
+    .stock-actions button {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      border: 1px solid var(--cinza-borda);
+      background: #1c1c1e;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+
+    .modal-card.wide { max-width: 560px; text-align: left; }
+    .modal-card.wide h3 { text-align: left; }
+
     /* RESPONSIVE */
+    @media (min-width: 800px) {
+      .rank-grid, .split { grid-template-columns: 1fr 1fr; }
+      .order-row { grid-template-columns: 1.4fr .8fr .7fr auto; }
+      .client-row { grid-template-columns: 1.3fr .8fr .6fr .8fr .8fr; }
+    }
+
     @media (max-width: 768px) {
       .admin-body { grid-template-columns: 1fr; }
-      .sidebar { display: none; }
+      .sidebar {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 10px;
+        border-right: none;
+        border-bottom: 1px solid #2a2a2e;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+      }
+      .sidebar-title { display: none; }
+      .sidebar-btn { width: auto; white-space: nowrap; margin: 0; }
+      .admin-content { padding: 16px 12px 32px; }
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
+      .search-input { width: 100%; }
+      .table-header { flex-direction: column; align-items: stretch; gap: 10px; }
       #toast { left: 16px; right: 16px; top: 70px; }
     }
   </style>
@@ -799,6 +937,7 @@
 
   <!-- ===== PAINEL ADMIN ===== -->
   <div id="tela-admin">
+    <div id="demo-banner" class="demo-banner" hidden>Modo demonstração neste computador. Nada é gravado no Firestore nem no backend.</div>
 
     <!-- HEADER -->
     <div class="admin-header">
@@ -817,14 +956,29 @@
       <!-- SIDEBAR -->
       <aside class="sidebar">
         <div class="sidebar-title">Menu</div>
-        <button class="sidebar-btn active" onclick="showSection('dashboard', this)">
+        <button class="sidebar-btn active" data-section="dashboard" onclick="showSection('dashboard', this)">
           <i class="fas fa-chart-bar"></i> Dashboard
         </button>
-        <button class="sidebar-btn" onclick="showSection('produtos', this)">
+        <button class="sidebar-btn" data-section="vendidos" onclick="showSection('vendidos', this)">
+          <i class="fas fa-trophy"></i> Mais vendidos
+        </button>
+        <button class="sidebar-btn" data-section="pedidos" onclick="showSection('pedidos', this)">
+          <i class="fas fa-receipt"></i> Pedidos
+        </button>
+        <button class="sidebar-btn" data-section="estoque" onclick="showSection('estoque', this)">
+          <i class="fas fa-warehouse"></i> Estoque
+        </button>
+        <button class="sidebar-btn" data-section="clientes" onclick="showSection('clientes', this)">
+          <i class="fas fa-users"></i> Clientes
+        </button>
+        <button class="sidebar-btn" data-section="produtos" onclick="showSection('produtos', this)">
           <i class="fas fa-box"></i> Produtos
         </button>
-        <button class="sidebar-btn" onclick="showSection('cadastrar', this)">
+        <button class="sidebar-btn" data-section="cadastrar" onclick="showSection('cadastrar', this)">
           <i class="fas fa-plus-circle"></i> Cadastrar Produto
+        </button>
+        <button class="sidebar-btn" data-section="config" onclick="showSection('config', this)">
+          <i class="fas fa-cog"></i> Configurações
         </button>
       </aside>
 
@@ -837,39 +991,103 @@
             <i class="fas fa-chart-bar" style="color:var(--vermelho)"></i>
             Dash<span>board</span>
           </div>
+          <div class="period-bar" id="period-bar">
+            <button type="button" class="period-btn" data-period="hoje">Hoje</button>
+            <button type="button" class="period-btn" data-period="7">7 dias</button>
+            <button type="button" class="period-btn active" data-period="30">30 dias</button>
+            <button type="button" class="period-btn" data-period="mes">Mês atual</button>
+            <button type="button" class="period-btn" data-period="custom">Personalizado</button>
+            <input type="date" id="periodo-inicio" class="form-input" hidden>
+            <input type="date" id="periodo-fim" class="form-input" hidden>
+          </div>
           <div class="dashboard-grid">
-            <div class="dash-card vermelho">
-              <div class="dash-card-icon"><i class="fas fa-box"></i></div>
-              <div class="dash-card-valor" id="dash-total">—</div>
-              <div class="dash-card-label">Total de Produtos</div>
-            </div>
             <div class="dash-card verde">
-              <div class="dash-card-icon"><i class="fas fa-check-circle"></i></div>
-              <div class="dash-card-valor" id="dash-estoque">—</div>
-              <div class="dash-card-label">Em Estoque</div>
+              <div class="dash-card-label">Faturamento</div>
+              <div class="dash-card-valor" id="dash-faturamento">—</div>
+              <div class="delta flat" id="dash-faturamento-delta"></div>
             </div>
-            <div class="dash-card amarelo">
-              <div class="dash-card-icon"><i class="fas fa-exclamation-triangle"></i></div>
-              <div class="dash-card-valor" id="dash-baixo">—</div>
-              <div class="dash-card-label">Estoque Baixo</div>
+            <div class="dash-card vermelho">
+              <div class="dash-card-label">Quantidade de vendas</div>
+              <div class="dash-card-valor" id="dash-vendas">—</div>
+              <div class="delta flat" id="dash-vendas-delta"></div>
             </div>
             <div class="dash-card azul">
-              <div class="dash-card-icon"><i class="fas fa-times-circle"></i></div>
-              <div class="dash-card-valor" id="dash-zero">—</div>
-              <div class="dash-card-label">Esgotados</div>
+              <div class="dash-card-label">Ticket médio</div>
+              <div class="dash-card-valor" id="dash-ticket">—</div>
+              <div class="delta flat" id="dash-ticket-delta"></div>
+            </div>
+            <div class="dash-card amarelo">
+              <div class="dash-card-label">Aguardando pagamento</div>
+              <div class="dash-card-valor" id="dash-aguardando">—</div>
+            </div>
+            <div class="dash-card verde">
+              <div class="dash-card-label">Taxas de entrega recebidas</div>
+              <div class="dash-card-valor" id="dash-taxas">—</div>
+              <div class="delta flat" id="dash-taxas-delta"></div>
+            </div>
+            <div class="dash-card amarelo">
+              <div class="dash-card-label">Estoque baixo / esgotado</div>
+              <div class="dash-card-valor" id="dash-baixo">—</div>
+              <div class="dash-card-label" id="dash-zero">Agora, no cadastro</div>
             </div>
           </div>
+          <div class="chart-card">
+            <h3 class="form-label">Faturamento por dia</h3>
+            <canvas id="chart-receita" height="120"></canvas>
+          </div>
+          <div id="dashboard-empty"></div>
+        </section>
 
-          <div class="table-wrap">
-            <div class="table-header">
-              <h3><i class="fas fa-list" style="color:var(--vermelho);margin-right:8px"></i>Últimos Produtos</h3>
-              <button class="btn-novo" onclick="showSection('cadastrar', document.querySelector('.sidebar-btn:nth-child(3)'))">
-                <i class="fas fa-plus"></i> Novo Produto
-              </button>
+        <section id="section-vendidos" class="section">
+          <div class="section-title"><i class="fas fa-trophy" style="color:var(--vermelho)"></i> Mais <span>vendidos</span></div>
+          <p class="form-label" id="vendidos-periodo"></p>
+          <div class="rank-grid">
+            <div class="rank-card">
+              <h3>Por quantidade</h3>
+              <div id="rank-qtd"></div>
             </div>
-            <div id="tabela-dashboard">
-              <div class="loading-wrap"><i class="fas fa-spinner"></i> Carregando...</div>
+            <div class="rank-card">
+              <h3>Por faturamento</h3>
+              <div id="rank-valor"></div>
             </div>
+          </div>
+        </section>
+
+        <section id="section-pedidos" class="section">
+          <div class="section-title"><i class="fas fa-receipt" style="color:var(--vermelho)"></i> Pe<span>didos</span></div>
+          <div class="toolbar">
+            <input type="search" id="search-pedidos" class="search-input" placeholder="Buscar nome, WhatsApp ou pedido">
+            <select id="filtro-status" class="form-select"></select>
+            <button type="button" class="btn-novo" id="btn-csv">Exportar CSV do período</button>
+          </div>
+          <div id="lista-pedidos"></div>
+        </section>
+
+        <section id="section-estoque" class="section">
+          <div class="section-title"><i class="fas fa-warehouse" style="color:var(--vermelho)"></i> Es<span>toque</span></div>
+          <div id="lista-estoque"></div>
+        </section>
+
+        <section id="section-clientes" class="section">
+          <div class="section-title"><i class="fas fa-users" style="color:var(--vermelho)"></i> Cli<span>entes</span></div>
+          <div id="lista-clientes"></div>
+        </section>
+
+        <section id="section-config" class="section">
+          <div class="section-title"><i class="fas fa-cog" style="color:var(--vermelho)"></i> Configu<span>rações</span></div>
+          <div class="settings-card">
+            <p style="color:#aaa;line-height:1.55;margin-bottom:14px;">
+              Cole aqui o mesmo <strong>ADMIN_TOKEN</strong> do backend. Ele fica só neste navegador
+              (localStorage) e autoriza a mudança de Separando, Saiu para entrega, Entregue e Retirado.
+              O painel não guarda essa senha no código.
+            </p>
+            <label class="form-label" for="admin-token">Token do administrador</label>
+            <input type="password" id="admin-token" class="form-input" autocomplete="off" style="max-width:420px;margin:8px 0 12px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-salvar" id="btn-salvar-token">Salvar neste navegador</button>
+              <button type="button" class="btn-cancelar" id="btn-apagar-token">Apagar</button>
+            </div>
+            <p id="token-estado" class="form-label" style="margin-top:12px;"></p>
           </div>
         </section>
 
@@ -887,7 +1105,7 @@
               <div style="display:flex;gap:10px;align-items:center;">
                 <input type="text" class="search-input" id="search-produtos"
                   placeholder="🔍 Buscar produto..." oninput="filtrarTabela()">
-                <button class="btn-novo" onclick="showSection('cadastrar', document.querySelectorAll('.sidebar-btn')[2])">
+                <button class="btn-novo" onclick="showSection('cadastrar')">
                   <i class="fas fa-plus"></i> Novo
                 </button>
               </div>
@@ -981,6 +1199,10 @@
   <!-- TOAST -->
   <div id="toast"></div>
 
+  <div class="modal-bg" id="modal-pedido">
+    <div class="modal-card wide" id="pedido-detalhe"></div>
+  </div>
+
   <!-- MODAL DELETE -->
   <div class="modal-bg" id="modal-delete">
     <div class="modal-card">
@@ -996,6 +1218,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -1022,17 +1245,53 @@
     const storage = getStorage(app);
     const auth = getAuth(app);
 
-    // ===== AUTH REAL (Firebase Authentication) =====
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById('tela-login').style.display = 'none';
-        document.getElementById('tela-admin').style.display = 'block';
-        carregarProdutos();
-      } else {
-        document.getElementById('tela-login').style.display = 'flex';
-        document.getElementById('tela-admin').style.display = 'none';
-      }
-    });
+    const BACKEND_BASE_URL = 'https://powerlabsuplementos-backend.vercel.app';
+    const TOKEN_KEY = 'powerlab-admin-token';
+    const hostLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const demoParam = new URLSearchParams(location.search).get('demo');
+    const DEMO = hostLocal && (demoParam === '1' || demoParam === 'vazio');
+    const DEMO_VAZIO = hostLocal && demoParam === 'vazio';
+
+    const STATUS_LABEL = {
+      aguardando_pagamento: 'Aguardando pagamento',
+      pago: 'Pago',
+      vencido: 'Vencido',
+      cancelado: 'Cancelado',
+      estornado: 'Estornado',
+      estornado_parcial: 'Estorno parcial',
+      estorno_em_andamento: 'Estorno em andamento',
+      chargeback: 'Chargeback',
+      recusado: 'Recusado',
+      rejeitado: 'Rejeitado',
+      erro: 'Erro',
+      separando: 'Separando',
+      saiu_para_entrega: 'Saiu para entrega',
+      entregue: 'Entregue',
+      retirado: 'Retirado',
+    };
+    const FULFILMENT = ['separando', 'saiu_para_entrega', 'entregue', 'retirado'];
+    const PAGOS = new Set(['pago'].concat(FULFILMENT));
+    let todosPedidos = [];
+    let pedidosErro = '';
+    let periodoAtual = '30';
+    let grafico = null;
+
+    if (DEMO) {
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('tela-admin').style.display = 'block';
+      document.getElementById('demo-banner').hidden = false;
+    } else {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          document.getElementById('tela-login').style.display = 'none';
+          document.getElementById('tela-admin').style.display = 'block';
+          carregarTudo();
+        } else {
+          document.getElementById('tela-login').style.display = 'flex';
+          document.getElementById('tela-admin').style.display = 'none';
+        }
+      });
+    }
 
     window.fazerLogin = async function() {
       const email = document.getElementById('login-user').value.trim();
@@ -1068,65 +1327,558 @@
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(`section-${nome}`).classList.add('active');
-      if (btn) btn.classList.add('active');
+      const target = btn || document.querySelector(`.sidebar-btn[data-section="${nome}"]`);
+      if (target) target.classList.add('active');
+      if (nome === 'vendidos') renderRanking();
+      if (nome === 'pedidos') renderPedidos();
+      if (nome === 'estoque') renderEstoque();
+      if (nome === 'clientes') renderClientes();
+      if (nome === 'config') renderTokenEstado();
     }
 
     // ===== PRODUTOS =====
     let todosProdutos = [];
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function onlyDigits(value) {
+      return String(value || '').replace(/\D/g, '');
+    }
+
+    function parseEstoque(value) {
+      if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.floor(value));
+      if (typeof value === 'string') {
+        const normalized = value.trim().replace(/\s/g, '').replace(',', '.');
+        if (!/^\d+(\.\d+)?$/.test(normalized)) return 0;
+        return Math.max(0, Math.floor(Number(normalized)));
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+    }
+
+    function money(value) {
+      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function ymdSP(date) {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    }
+
+    function toDate(value) {
+      if (!value) return null;
+      if (value instanceof Date) return value;
+      if (typeof value.toDate === 'function') return value.toDate();
+      if (typeof value.seconds === 'number') return new Date(value.seconds * 1000);
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatWhen(value) {
+      const date = toDate(value);
+      if (!date) return '—';
+      return date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    }
+
+    function periodBounds() {
+      const today = ymdSP(new Date());
+      const end = new Date(today + 'T23:59:59.999-03:00');
+      if (periodoAtual === 'hoje') return { start: new Date(today + 'T00:00:00-03:00'), end };
+      if (periodoAtual === '7') return { start: shiftDay(today, -6), end };
+      if (periodoAtual === 'mes') {
+        const [year, month] = today.split('-');
+        return { start: new Date(year + '-' + month + '-01T00:00:00-03:00'), end };
+      }
+      if (periodoAtual === 'custom') {
+        const ini = document.getElementById('periodo-inicio').value;
+        const fim = document.getElementById('periodo-fim').value;
+        if (ini && fim) {
+          return { start: new Date(ini + 'T00:00:00-03:00'), end: new Date(fim + 'T23:59:59.999-03:00') };
+        }
+      }
+      return { start: shiftDay(today, -29), end };
+    }
+
+    function shiftDay(ymd, delta) {
+      const date = new Date(ymd + 'T12:00:00-03:00');
+      date.setUTCDate(date.getUTCDate() + delta);
+      return new Date(ymdSP(date) + 'T00:00:00-03:00');
+    }
+
+    function previousBounds(range) {
+      if (periodoAtual === 'mes') {
+        const ymd = ymdSP(range.start);
+        const [year, month] = ymd.split('-').map(Number);
+        const prevMonth = month === 1 ? 12 : month - 1;
+        const prevYear = month === 1 ? year - 1 : year;
+        const start = new Date(prevYear + '-' + String(prevMonth).padStart(2, '0') + '-01T00:00:00-03:00');
+        return { start, end: new Date(range.start.getTime() - 1) };
+      }
+      const span = range.end.getTime() - range.start.getTime() + 1;
+      return { start: new Date(range.start.getTime() - span), end: new Date(range.start.getTime() - 1) };
+    }
+
+    function inRange(date, range) {
+      const parsed = toDate(date);
+      if (!parsed) return false;
+      return parsed.getTime() >= range.start.getTime() && parsed.getTime() <= range.end.getTime();
+    }
+
+    function saleDate(order) {
+      return toDate(order.paidAt) || toDate(order.createdAt);
+    }
+
+    function isPaid(order) {
+      return PAGOS.has(order.status);
+    }
+
+    function ordersIn(range, predicate) {
+      return todosPedidos.filter((order) => predicate(order) && inRange(predicate === isPaid ? saleDate(order) : order.createdAt, range));
+    }
+
+    function paidIn(range) {
+      return todosPedidos.filter((order) => isPaid(order) && inRange(saleDate(order), range));
+    }
+
+    function sumMoney(list, pick) {
+      return Math.round(list.reduce((sum, order) => sum + Number(pick(order) || 0), 0) * 100) / 100;
+    }
+
+    function deltaInfo(current, previous) {
+      if (!previous && !current) return { cls: 'flat', text: 'igual ao período anterior' };
+      if (!previous) return { cls: 'up', text: 'sem base no período anterior' };
+      const pct = Math.round(((current - previous) / previous) * 100);
+      if (pct === 0) return { cls: 'flat', text: '0% vs período anterior' };
+      return { cls: pct > 0 ? 'up' : 'down', text: (pct > 0 ? '+' : '') + pct + '% vs período anterior' };
+    }
+
+    function setDelta(id, info) {
+      const el = document.getElementById(id);
+      el.className = 'delta ' + info.cls;
+      el.textContent = info.text;
+    }
+
+    function eachDay(range) {
+      const days = [];
+      let cursor = ymdSP(range.start);
+      const last = ymdSP(range.end);
+      let guard = 0;
+      while (cursor <= last && guard < 400) {
+        days.push(cursor);
+        cursor = ymdSP(new Date(new Date(cursor + 'T12:00:00-03:00').getTime() + 86400000));
+        guard += 1;
+      }
+      return days;
+    }
+
+    function customerOf(order) {
+      return order.customer && typeof order.customer === 'object' ? order.customer : {};
+    }
+
+    function statusLabel(status) {
+      return STATUS_LABEL[status] || status || '—';
+    }
+
+    function emptySales(title) {
+      if (pedidosErro) {
+        return '<div class="empty-state"><strong>Não foi possível ler os pedidos</strong><p>' + escapeHtml(pedidosErro) + '</p></div>';
+      }
+      if (!todosPedidos.length) {
+        return '<div class="empty-state"><strong>' + escapeHtml(title || 'Ainda não há vendas pelo site') + '</strong><p>Quando um cliente pagar pelo site, o pedido aparece aqui.</p></div>';
+      }
+      return '<div class="empty-state"><strong>Nenhum pedido neste período</strong><p>Troque o filtro de datas para ver outro intervalo.</p></div>';
+    }
+
     async function carregarProdutos() {
+      if (DEMO) return;
+      const snap = await getDocs(collection(db, 'produtos'));
+      todosProdutos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    async function carregarPedidos() {
+      if (DEMO) return;
       try {
-        const snap = await getDocs(collection(db, 'produtos'));
-        todosProdutos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        atualizarDashboard();
+        const snap = await getDocs(collection(db, 'orders'));
+        todosPedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        pedidosErro = '';
+      } catch (e) {
+        todosPedidos = [];
+        pedidosErro = 'Sem permissão para ler a coleção orders. Publique as regras do arquivo firestore.rules para o administrador.';
+        console.error(e);
+      }
+    }
+
+    async function carregarTudo() {
+      try {
+        await carregarProdutos();
+        await carregarPedidos();
+        renderPainel();
         renderizarTabela();
       } catch (e) {
-        showToast('Erro ao carregar produtos: ' + e.message, 'error');
+        showToast('Erro ao carregar: ' + e.message, 'error');
       }
     }
 
-    function atualizarDashboard() {
-      const total = todosProdutos.length;
-      const emEstoque = todosProdutos.filter(p => p.estoque > 3).length;
-      const baixo = todosProdutos.filter(p => p.estoque > 0 && p.estoque <= 3).length;
-      const zero = todosProdutos.filter(p => p.estoque <= 0).length;
-      document.getElementById('dash-total').textContent = total;
-      document.getElementById('dash-estoque').textContent = emEstoque;
-      document.getElementById('dash-baixo').textContent = baixo;
-      document.getElementById('dash-zero').textContent = zero;
-      renderizarTabelaDash(todosProdutos.slice(0, 5));
+    function renderPainel() {
+      renderDashboard();
+      renderRanking();
+      renderPedidos();
+      renderEstoque();
+      renderClientes();
     }
 
-    function renderizarTabelaDash(lista) {
-      const el = document.getElementById('tabela-dashboard');
-      if (!lista.length) {
-        el.innerHTML = '<p class="empty-table">Nenhum produto cadastrado ainda.</p>';
+    function renderDashboard() {
+      const range = periodBounds();
+      const before = previousBounds(range);
+      const paid = paidIn(range);
+      const paidBefore = paidIn(before);
+      const faturamento = sumMoney(paid, (order) => order.total);
+      const faturamentoAntes = sumMoney(paidBefore, (order) => order.total);
+      const taxas = sumMoney(paid, (order) => order.taxaEntrega);
+      const taxasAntes = sumMoney(paidBefore, (order) => order.taxaEntrega);
+      const ticket = paid.length ? faturamento / paid.length : 0;
+      const ticketAntes = paidBefore.length ? faturamentoAntes / paidBefore.length : 0;
+      const aguardando = todosPedidos.filter((order) => order.status === 'aguardando_pagamento' && inRange(order.createdAt, range)).length;
+      const baixo = todosProdutos.filter((product) => { const n = parseEstoque(product.estoque); return n > 0 && n <= 3; }).length;
+      const zero = todosProdutos.filter((product) => parseEstoque(product.estoque) <= 0).length;
+
+      document.getElementById('dash-faturamento').textContent = money(faturamento);
+      document.getElementById('dash-vendas').textContent = String(paid.length);
+      document.getElementById('dash-ticket').textContent = money(ticket);
+      document.getElementById('dash-aguardando').textContent = String(aguardando);
+      document.getElementById('dash-taxas').textContent = money(taxas);
+      document.getElementById('dash-baixo').textContent = String(baixo + zero);
+      document.getElementById('dash-zero').textContent = baixo + ' baixo · ' + zero + ' esgotado';
+      setDelta('dash-faturamento-delta', deltaInfo(faturamento, faturamentoAntes));
+      setDelta('dash-vendas-delta', deltaInfo(paid.length, paidBefore.length));
+      setDelta('dash-ticket-delta', deltaInfo(ticket, ticketAntes));
+      setDelta('dash-taxas-delta', deltaInfo(taxas, taxasAntes));
+
+      const box = document.getElementById('dashboard-empty');
+      box.innerHTML = paid.length || todosPedidos.length ? '' : emptySales();
+      const days = eachDay(range);
+      const byDay = {};
+      paid.forEach((order) => {
+        const key = ymdSP(saleDate(order));
+        byDay[key] = (byDay[key] || 0) + Number(order.total || 0);
+      });
+      drawChart(days.map((day) => day.slice(8) + '/' + day.slice(5, 7)), days.map((day) => Math.round((byDay[day] || 0) * 100) / 100));
+    }
+
+    function drawChart(labels, values) {
+      const canvas = document.getElementById('chart-receita');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (grafico) grafico.destroy();
+      grafico = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Faturamento', data: values, backgroundColor: '#e8000d' }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#aaa', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
+            y: { ticks: { color: '#aaa' }, grid: { color: '#2e2e32' } },
+          },
+        },
+      });
+    }
+
+    function productTotals(list) {
+      const map = new Map();
+      list.forEach((order) => {
+        (order.items || []).forEach((item) => {
+          const key = String(item.id || item.nome);
+          const row = map.get(key) || { nome: item.nome || 'Produto', qty: 0, revenue: 0 };
+          row.qty += Number(item.quantidade || 0);
+          row.revenue += Number(item.subtotal || 0);
+          map.set(key, row);
+        });
+      });
+      return [...map.values()];
+    }
+
+    function renderRanking() {
+      const range = periodBounds();
+      document.getElementById('vendidos-periodo').textContent = 'Pedidos pagos de ' + ymdSP(range.start).split('-').reverse().join('/') + ' a ' + ymdSP(range.end).split('-').reverse().join('/');
+      const rows = productTotals(paidIn(range));
+      const byQty = rows.slice().sort((a, b) => b.qty - a.qty);
+      const byMoney = rows.slice().sort((a, b) => b.revenue - a.revenue);
+      document.getElementById('rank-qtd').innerHTML = byQty.length ? byQty.map((row, index) =>
+        '<div class="rank-row"><strong>' + (index + 1) + '</strong><span>' + escapeHtml(row.nome) + '</span><span>' + row.qty + ' un.</span></div>'
+      ).join('') : emptySales();
+      document.getElementById('rank-valor').innerHTML = byMoney.length ? byMoney.map((row, index) =>
+        '<div class="rank-row"><strong>' + (index + 1) + '</strong><span>' + escapeHtml(row.nome) + '</span><span>' + money(row.revenue) + '</span></div>'
+      ).join('') : emptySales();
+    }
+
+    function pedidosDoPeriodo() {
+      const range = periodBounds();
+      return todosPedidos.filter((order) => inRange(order.createdAt, range));
+    }
+
+    function renderPedidos() {
+      const select = document.getElementById('filtro-status');
+      if (!select.options.length) {
+        select.innerHTML = '<option value="">Todos os status</option>' + Object.keys(STATUS_LABEL).map((key) =>
+          '<option value="' + key + '">' + STATUS_LABEL[key] + '</option>'
+        ).join('');
+      }
+      const term = (document.getElementById('search-pedidos').value || '').trim().toLowerCase();
+      const status = select.value;
+      const list = pedidosDoPeriodo().filter((order) => {
+        if (status && order.status !== status) return false;
+        const customer = customerOf(order);
+        const blob = [order.id, order.externalReference, customer.nome, customer.telefone].join(' ').toLowerCase();
+        return !term || blob.includes(term);
+      }).sort((a, b) => (toDate(b.createdAt) || 0) - (toDate(a.createdAt) || 0));
+      const el = document.getElementById('lista-pedidos');
+      if (!list.length) {
+        el.innerHTML = emptySales();
         return;
       }
-      el.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Imagem</th>
-              <th>Nome</th>
-              <th>Preço</th>
-              <th>Categoria</th>
-              <th>Estoque</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${lista.map(p => `
-              <tr>
-                <td><img class="td-img" src="${p.imgurl || 'https://placehold.co/48x48/252528/e8000d?text=+'}" alt="${p.nome}"></td>
-                <td class="td-nome">${p.nome}</td>
-                <td class="td-preco">R$ ${parseFloat(p.preco).toFixed(2).replace('.', ',')}</td>
-                <td class="td-categoria">${p.categoria || '—'}</td>
-                <td>${badgeEstoque(p.estoque)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
+      el.innerHTML = '<div class="table-wrap"><div class="table-scroll">' + list.map((order) => {
+        const customer = customerOf(order);
+        return '<button type="button" class="order-row" data-order="' + escapeHtml(order.id) + '" style="width:100%;background:transparent;color:inherit;border:none;border-bottom:1px solid #2a2a2e;text-align:left;">'
+          + '<strong>' + escapeHtml(customer.nome || 'Cliente') + '</strong>'
+          + '<span>' + escapeHtml(formatWhen(order.createdAt)) + '</span>'
+          + '<span class="status-pill">' + escapeHtml(statusLabel(order.status)) + '</span>'
+          + '<span>' + money(order.total) + '</span>'
+          + '</button>';
+      }).join('') + '</div></div>';
+    }
+
+    function abrirPedido(id) {
+      const order = todosPedidos.find((item) => item.id === id);
+      if (!order) return;
+      const customer = customerOf(order);
+      const phone = onlyDigits(customer.telefone);
+      const wa = phone ? 'https://wa.me/' + (phone.length > 11 ? phone : '55' + phone) + '?text=' + encodeURIComponent('Olá ' + (customer.nome || '') + ', aqui é a Power Lab. Sobre o pedido ' + order.id + '.') : '';
+      const entrega = customer.entrega === 'entrega' ? 'Entrega' : 'Retirada na loja';
+      const itens = (order.items || []).map((item) =>
+        '<div>' + escapeHtml(item.quantidade + 'x ' + (item.nome || 'Produto')) + ' — ' + money(item.subtotal) + '</div>'
+      ).join('');
+      const invoice = /^https?:\/\//i.test(String(order.invoiceUrl || '')) ? order.invoiceUrl : '';
+      const buttons = (isPaid(order) ? FULFILMENT : []).map((status) =>
+        '<button type="button" class="period-btn" data-fulfil="' + status + '"' + (order.status === status ? ' disabled' : '') + '>' + STATUS_LABEL[status] + '</button>'
+      ).join('');
+      document.getElementById('pedido-detalhe').innerHTML = ''
+        + '<h3>Pedido</h3>'
+        + '<div class="detail-grid">'
+        + '<div><strong>' + escapeHtml(customer.nome || 'Cliente') + '</strong> · ' + escapeHtml(statusLabel(order.status)) + '</div>'
+        + '<div>' + itens + '</div>'
+        + '<div>Subtotal ' + money(order.subtotal) + ' · Taxa ' + money(order.taxaEntrega) + (order.km != null ? ' · ' + Number(order.km).toLocaleString('pt-BR') + ' km' : '') + '</div>'
+        + '<div>Total ' + money(order.total) + '</div>'
+        + '<div>' + entrega + (customer.endereco ? ' · ' + escapeHtml(customer.endereco) : '') + '</div>'
+        + (wa ? '<div><a href="' + wa + '" target="_blank" rel="noopener noreferrer">Abrir WhatsApp deste cliente</a></div>' : '')
+        + (invoice ? '<div><a href="' + escapeHtml(invoice) + '" target="_blank" rel="noopener noreferrer">Fatura Asaas</a></div>' : '')
+        + '<div>Referência ' + escapeHtml(order.externalReference || order.external_reference || order.id) + '</div>'
+        + '<div>Criado em ' + escapeHtml(formatWhen(order.createdAt)) + (order.paidAt ? ' · Pago em ' + escapeHtml(formatWhen(order.paidAt)) : '') + '</div>'
+        + '</div>'
+        + '<div class="fulfil-row">' + buttons + '</div>'
+        + '<div class="modal-actions" style="margin-top:16px;"><button type="button" class="btn-cancelar" id="fechar-pedido">Fechar</button></div>';
+      document.getElementById('modal-pedido').classList.add('show');
+      document.getElementById('fechar-pedido').onclick = () => document.getElementById('modal-pedido').classList.remove('show');
+      document.getElementById('pedido-detalhe').querySelectorAll('[data-fulfil]').forEach((button) => {
+        button.onclick = () => mudarStatus(order.id, button.dataset.fulfil);
+      });
+    }
+
+    async function mudarStatus(orderId, newStatus) {
+      if (DEMO) {
+        const order = todosPedidos.find((item) => item.id === orderId);
+        if (order) order.status = newStatus;
+        document.getElementById('modal-pedido').classList.remove('show');
+        renderPainel();
+        showToast('Demonstração: status não foi enviado ao backend.', 'success');
+        return;
+      }
+      const token = localStorage.getItem(TOKEN_KEY) || '';
+      if (!token) {
+        showToast('Salve o token em Configurações.', 'error');
+        document.getElementById('modal-pedido').classList.remove('show');
+        showSection('config');
+        return;
+      }
+      try {
+        const response = await fetch(BACKEND_BASE_URL + '/api/update-order-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ orderId, newStatus }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          showToast(data.error || 'Não foi possível atualizar o pedido.', 'error');
+          return;
+        }
+        const order = todosPedidos.find((item) => item.id === orderId);
+        if (order) order.status = newStatus;
+        document.getElementById('modal-pedido').classList.remove('show');
+        renderPainel();
+        showToast('Status atualizado.', 'success');
+      } catch (e) {
+        showToast('Não foi possível atualizar o pedido.', 'error');
+      }
+    }
+
+    function exportarCsv() {
+      const rows = pedidosDoPeriodo();
+      const header = ['id', 'criado_em', 'status', 'cliente', 'whatsapp', 'entrega', 'endereco', 'subtotal', 'taxaEntrega', 'km', 'total', 'externalReference'];
+      const lines = [header.join(';')];
+      rows.forEach((order) => {
+        const customer = customerOf(order);
+        lines.push([
+          order.id,
+          formatWhen(order.createdAt),
+          statusLabel(order.status),
+          customer.nome || '',
+          customer.telefone || '',
+          customer.entrega || '',
+          customer.endereco || '',
+          order.subtotal ?? '',
+          order.taxaEntrega ?? '',
+          order.km ?? '',
+          order.total ?? '',
+          order.externalReference || order.external_reference || '',
+        ].map((cell) => '"' + String(cell).replace(/"/g, '""') + '"').join(';'));
+      });
+      const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'pedidos-powerlab.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function renderEstoque() {
+      const lows = todosProdutos.filter((product) => parseEstoque(product.estoque) <= 3);
+      const el = document.getElementById('lista-estoque');
+      const alert = lows.length
+        ? '<div class="empty-state"><strong>' + lows.length + ' produto(s) com estoque baixo ou esgotado</strong></div>'
+        : '<div class="empty-state"><strong>Nenhum produto com estoque baixo</strong></div>';
+      el.innerHTML = alert + '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Produto</th><th>Estoque</th><th>Ajuste</th></tr></thead><tbody>'
+        + todosProdutos.map((product) => '<tr><td>' + escapeHtml(product.nome) + '</td><td>' + badgeEstoque(product.estoque) + '</td><td><div class="stock-actions"><button type="button" data-stock="' + escapeHtml(product.id) + '" data-delta="-1">−</button><button type="button" data-stock="' + escapeHtml(product.id) + '" data-delta="1">+</button></div></td></tr>').join('')
+        + '</tbody></table></div></div>';
+    }
+
+    async function ajustarEstoque(id, delta) {
+      const product = todosProdutos.find((item) => item.id === id);
+      if (!product) return;
+      const next = Math.max(0, parseEstoque(product.estoque) + delta);
+      if (DEMO) {
+        product.estoque = next;
+        renderPainel();
+        renderizarTabela();
+        showToast('Demonstração: estoque não foi gravado.', 'success');
+        return;
+      }
+      try {
+        await updateDoc(doc(db, 'produtos', id), { estoque: next, updatedAt: serverTimestamp() });
+        product.estoque = next;
+        renderPainel();
+        renderizarTabela();
+        showToast('Estoque atualizado.', 'success');
+      } catch (e) {
+        showToast('Erro ao atualizar estoque: ' + e.message, 'error');
+      }
+    }
+
+    function renderClientes() {
+      const map = new Map();
+      todosPedidos.forEach((order) => {
+        if (order.status === 'erro') return;
+        const customer = customerOf(order);
+        const key = onlyDigits(customer.telefone) || onlyDigits(customer.cpfCnpj) || (customer.nome || order.id);
+        const row = map.get(key) || { nome: customer.nome || 'Cliente', telefone: customer.telefone || '', pedidos: 0, gasto: 0, ultimo: null };
+        row.pedidos += 1;
+        if (isPaid(order)) row.gasto += Number(order.total || 0);
+        const when = toDate(order.createdAt);
+        if (when && (!row.ultimo || when > row.ultimo)) row.ultimo = when;
+        map.set(key, row);
+      });
+      const rows = [...map.values()].sort((a, b) => b.gasto - a.gasto);
+      const el = document.getElementById('lista-clientes');
+      if (!rows.length) {
+        el.innerHTML = emptySales();
+        return;
+      }
+      el.innerHTML = '<div class="table-wrap">' + rows.map((row) =>
+        '<div class="client-row"><strong>' + escapeHtml(row.nome) + '</strong><span>' + escapeHtml(row.telefone || '—') + '</span><span>' + row.pedidos + ' pedidos</span><span>' + money(row.gasto) + '</span><span>' + (row.ultimo ? row.ultimo.toLocaleDateString('pt-BR') : '—') + '</span></div>'
+      ).join('') + '</div>';
+    }
+
+    function renderTokenEstado() {
+      const saved = localStorage.getItem(TOKEN_KEY);
+      document.getElementById('token-estado').textContent = saved ? 'Token salvo neste navegador.' : 'Nenhum token salvo.';
+      document.getElementById('admin-token').value = '';
+    }
+
+    function daysAgo(n) {
+      const today = ymdSP(new Date());
+      return new Date(shiftDay(today, -n).getTime() + 15 * 3600000);
+    }
+
+    function iniciarDemo() {
+      todosProdutos = [
+        { id: 'whey', nome: 'Whey Protein', preco: 89.9, estoque: 40, categoria: 'proteinas', descricao: 'Isolate', imgurl: '' },
+        { id: 'profit', nome: 'Whey Profit 900g', preco: 124.9, estoque: 2, categoria: 'proteinas', descricao: '', imgurl: '' },
+        { id: 'crea', nome: 'Creatina 300g', preco: 79.9, estoque: 0, categoria: 'pretreinos', descricao: '', imgurl: '' },
+        { id: 'vita', nome: 'Vitamina D', preco: 39.9, estoque: 12, categoria: 'vitaminas', descricao: '', imgurl: '' },
+      ];
+      todosPedidos = DEMO_VAZIO ? [] : [
+        pedidoDemo('p1', 0, 'pago', 'Maria Souza', '74999998888', 'entrega', 7, 0.4, [{ id: 'whey', nome: 'Whey Protein', preco: 89.9, quantidade: 1, subtotal: 89.9 }]),
+        pedidoDemo('p2', 0, 'aguardando_pagamento', 'João Lima', '74988887777', 'retirada', 0, null, [{ id: 'vita', nome: 'Vitamina D', preco: 39.9, quantidade: 2, subtotal: 79.8 }]),
+        pedidoDemo('p3', 1, 'pago', 'Maria Souza', '74999998888', 'retirada', 0, null, [{ id: 'profit', nome: 'Whey Profit 900g', preco: 124.9, quantidade: 1, subtotal: 124.9 }]),
+        pedidoDemo('p4', 2, 'entregue', 'Ana Costa', '74977776666', 'entrega', 14.3, 10, [{ id: 'whey', nome: 'Whey Protein', preco: 89.9, quantidade: 2, subtotal: 179.8 }]),
+        pedidoDemo('p5', 3, 'separando', 'Carlos Dias', '74966665555', 'entrega', 16.5, 12, [{ id: 'crea', nome: 'Creatina 300g', preco: 79.9, quantidade: 1, subtotal: 79.9 }]),
+        pedidoDemo('p6', 6, 'retirado', 'Ana Costa', '74977776666', 'retirada', 0, null, [{ id: 'vita', nome: 'Vitamina D', preco: 39.9, quantidade: 1, subtotal: 39.9 }]),
+        pedidoDemo('p7', 10, 'pago', 'Pedro Alves', '74955554444', 'entrega', 14.3, 10, [{ id: 'whey', nome: 'Whey Protein', preco: 89.9, quantidade: 1, subtotal: 89.9 }]),
+        pedidoDemo('p8', 12, 'vencido', 'Pedro Alves', '74955554444', 'entrega', 7, 1.2, [{ id: 'profit', nome: 'Whey Profit 900g', preco: 124.9, quantidade: 1, subtotal: 124.9 }]),
+        pedidoDemo('p9', 20, 'estornado', 'Lúcia Nunes', '74944443333', 'retirada', 0, null, [{ id: 'whey', nome: 'Whey Protein', preco: 89.9, quantidade: 1, subtotal: 89.9 }]),
+        pedidoDemo('p10', 40, 'pago', 'Maria Souza', '74999998888', 'entrega', 16.5, 12, [{ id: 'whey', nome: 'Whey Protein', preco: 89.9, quantidade: 3, subtotal: 269.7 }]),
+      ];
+      pedidosErro = '';
+      renderPainel();
+      renderizarTabela();
+    }
+
+    function pedidoDemo(id, dias, status, nome, telefone, entrega, taxa, km, items) {
+      const created = daysAgo(dias);
+      const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+      const pago = PAGOS.has(status);
+      return {
+        id,
+        items,
+        subtotal,
+        taxaEntrega: taxa,
+        km,
+        total: Math.round((subtotal + taxa) * 100) / 100,
+        customer: {
+          nome,
+          telefone,
+          entrega,
+          endereco: entrega === 'entrega' ? 'Rua Exemplo, 10 — Centro — CEP 48900-000 — Juazeiro-BA' : '',
+          cep: entrega === 'entrega' ? '48900000' : '',
+          bairro: entrega === 'entrega' ? 'Centro' : '',
+        },
+        status,
+        provider: 'asaas',
+        externalReference: id,
+        createdAt: created,
+        paidAt: pago ? created : null,
+        invoiceUrl: 'https://sandbox.asaas.com/i/' + id,
+      };
     }
 
     function renderizarTabela(lista = todosProdutos) {
@@ -1173,9 +1925,10 @@
     }
 
     function badgeEstoque(qtd) {
-      if (qtd <= 0) return `<span class="badge-estoque zero">Esgotado</span>`;
-      if (qtd <= 3) return `<span class="badge-estoque baixo">Baixo (${qtd})</span>`;
-      return `<span class="badge-estoque ok">${qtd} un.</span>`;
+      const n = parseEstoque(qtd);
+      if (n <= 0) return `<span class="badge-estoque zero">Esgotado</span>`;
+      if (n <= 3) return `<span class="badge-estoque baixo">Baixo (${n})</span>`;
+      return `<span class="badge-estoque ok">${n} un.</span>`;
     }
 
     window.filtrarTabela = function() {
@@ -1205,6 +1958,23 @@
       const btn = document.getElementById('btn-salvar');
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner"></i> Salvando...';
+
+      if (DEMO) {
+        if (id) {
+          const atual = todosProdutos.find(x => x.id === id);
+          if (atual) Object.assign(atual, { nome, preco, categoria, estoque, descricao });
+        } else {
+          todosProdutos.push({ id: 'demo-' + Date.now(), nome, preco, categoria, estoque, descricao, imgurl: '' });
+        }
+        showToast('Demonstração: produto não foi gravado.', 'success');
+        limparForm();
+        renderPainel();
+        renderizarTabela();
+        showSection('produtos');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Salvar Produto';
+        return;
+      }
 
       try {
         let imgurl = document.getElementById('preview-img').dataset.url || '';
@@ -1237,7 +2007,9 @@
 
         limparForm();
         await carregarProdutos();
-        showSection('produtos', document.querySelectorAll('.sidebar-btn')[1]);
+        renderPainel();
+        renderizarTabela();
+        showSection('produtos');
 
       } catch (e) {
         showToast('Erro ao salvar: ' + e.message, 'error');
@@ -1291,7 +2063,7 @@
         document.getElementById('upload-placeholder').style.display = 'none';
       }
 
-      showSection('cadastrar', document.querySelectorAll('.sidebar-btn')[2]);
+      showSection('cadastrar');
       window.scrollTo(0, 0);
     }
 
@@ -1321,11 +2093,21 @@
       document.getElementById('delete-nome').textContent = nome;
       document.getElementById('modal-delete').classList.add('show');
       document.getElementById('btn-confirmar-delete').onclick = async () => {
+        if (DEMO) {
+          todosProdutos = todosProdutos.filter(p => p.id !== deleteId);
+          showToast('Demonstração: produto não foi excluído de verdade.', 'success');
+          fecharModalDelete();
+          renderPainel();
+          renderizarTabela();
+          return;
+        }
         try {
           await deleteDoc(doc(db, 'produtos', deleteId));
           showToast('✅ Produto excluído!', 'success');
           fecharModalDelete();
           await carregarProdutos();
+          renderPainel();
+          renderizarTabela();
         } catch (e) {
           showToast('Erro ao excluir: ' + e.message, 'error');
         }
@@ -1355,6 +2137,48 @@
       };
       reader.readAsDataURL(file);
     }
+
+    document.getElementById('period-bar').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-period]');
+      if (!button) return;
+      periodoAtual = button.dataset.period;
+      document.querySelectorAll('#period-bar .period-btn').forEach((el) => el.classList.toggle('active', el === button));
+      const custom = periodoAtual === 'custom';
+      document.getElementById('periodo-inicio').hidden = !custom;
+      document.getElementById('periodo-fim').hidden = !custom;
+      renderPainel();
+    });
+    document.getElementById('periodo-inicio').addEventListener('change', renderPainel);
+    document.getElementById('periodo-fim').addEventListener('change', renderPainel);
+    document.getElementById('search-pedidos').addEventListener('input', renderPedidos);
+    document.getElementById('filtro-status').addEventListener('change', renderPedidos);
+    document.getElementById('btn-csv').addEventListener('click', exportarCsv);
+    document.getElementById('lista-pedidos').addEventListener('click', (event) => {
+      const row = event.target.closest('[data-order]');
+      if (row) abrirPedido(row.dataset.order);
+    });
+    document.getElementById('lista-estoque').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-stock]');
+      if (button) ajustarEstoque(button.dataset.stock, Number(button.dataset.delta));
+    });
+    document.getElementById('btn-salvar-token').addEventListener('click', () => {
+      const value = document.getElementById('admin-token').value.trim();
+      if (!value) {
+        showToast('Informe o token.', 'error');
+        return;
+      }
+      localStorage.setItem(TOKEN_KEY, value);
+      renderTokenEstado();
+      showToast('Token salvo neste navegador.', 'success');
+    });
+    document.getElementById('btn-apagar-token').addEventListener('click', () => {
+      localStorage.removeItem(TOKEN_KEY);
+      renderTokenEstado();
+    });
+    document.getElementById('modal-pedido').addEventListener('click', (event) => {
+      if (event.target.id === 'modal-pedido') event.currentTarget.classList.remove('show');
+    });
+    if (DEMO) iniciarDemo();
 
     // ===== TOAST =====
     window.showToast = function(msg, tipo = 'success') {
