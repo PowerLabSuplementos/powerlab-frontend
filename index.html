@@ -338,6 +338,68 @@
       letter-spacing: 1px;
     }
 
+    .opt-group {
+      width: 100%;
+      margin: 6px 0 8px;
+      text-align: left;
+    }
+
+    .opt-label {
+      font-size: 0.78em;
+      color: var(--cinza-texto);
+      margin-bottom: 6px;
+    }
+
+    .opt-label strong { color: var(--branco); font-weight: 700; }
+    .opt-label .opt-hint { color: var(--cinza-texto); font-style: italic; }
+    .opt-group.need .opt-label,
+    .opt-group.need .opt-label .opt-hint { color: var(--amarelo); font-style: normal; font-weight: 700; }
+
+    .opt-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 2px 1px 4px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+    }
+
+    .opt-row::-webkit-scrollbar { display: none; }
+    .opt-row.more {
+      -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent);
+      mask-image: linear-gradient(90deg, #000 78%, transparent);
+    }
+
+    .opt-chip {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+      background: transparent;
+      color: var(--branco);
+      border: 1.5px solid var(--cinza-borda);
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.78em;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+
+    .opt-chip:hover { border-color: #77777c; }
+
+    .opt-chip.active {
+      border-color: var(--vermelho);
+      box-shadow: inset 0 0 0 1px var(--vermelho);
+      background: rgba(232, 0, 13, 0.10);
+    }
+
+    .opt-chip:focus-visible { outline: 2px solid var(--amarelo); outline-offset: 2px; }
+    .sheet-body .opt-row { flex-wrap: wrap; overflow: visible; }
+    .sheet-body .opt-group { margin: 10px 0 12px; }
+    .sheet-body .opt-label { font-size: 0.9em; }
+    .sheet-body .opt-chip { font-size: 0.86em; padding: 9px 14px; }
+
     .prod-estoque {
       font-size: 0.78em;
       font-weight: 700;
@@ -1004,6 +1066,7 @@
       .footer-ajuda { margin-top: 26px; gap: 16px 18px; }
       .footer-copy { margin-top: 26px; }
       .prod-img, .prod-img-wrapper { width: 110px; height: 110px; }
+      .opt-chip { padding: 8px 11px; }
       #cart { left: 8px; right: 8px; width: auto; bottom: 84px; }
       #cart-button { bottom: 16px; right: 16px; padding: 12px 16px; }
       #whatsapp-float { bottom: 16px; left: 16px; }
@@ -1240,12 +1303,19 @@
       nominatimMinIntervalMs: 1100,
     };
 
-    const CATEGORIAS = {
-      proteinas: 'Proteínas',
-      pretreinos: 'Pré-treinos e Energéticos',
-      vitaminas: 'Vitaminas e Minerais',
-      emagrecedores: 'Emagrecedores e Termogênicos',
-    };
+    // Categorias padrão. A lista editada no painel (Firestore config/categorias)
+    // substitui esta; categoria nova gravada só no produto também aparece sozinha.
+    const DEFAULT_CATEGORIAS = [
+      { id: 'proteinas', nome: 'Proteínas' },
+      { id: 'pretreinos', nome: 'Pré-treinos', titulo: 'Pré-treinos e Energéticos' },
+      { id: 'vitaminas', nome: 'Vitaminas', titulo: 'Vitaminas e Minerais' },
+      { id: 'emagrecedores', nome: 'Emagrecedores', titulo: 'Emagrecedores e Termogênicos' },
+      { id: 'cremes', nome: 'Cremes', titulo: 'Cremes e Pastas de Amendoim' },
+      { id: 'carbogel', nome: 'Carbo Gel' },
+      { id: 'barrinhas', nome: 'Barrinhas' },
+      { id: 'roupas', nome: 'Roupas' },
+    ];
+    let categoriasLista = DEFAULT_CATEGORIAS.slice();
 
     const CART_STORAGE_KEY = 'powerlab-cart';
 
@@ -1253,6 +1323,7 @@
     let productsReady = false;
     let cart = [];
     let selectedQty = {};
+    let selectedOpts = {};
     let categoriaAtiva = 'proteinas';
     let modalProductId = null;
     let modalQty = 1;
@@ -1503,10 +1574,16 @@
         const raw = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
         if (!Array.isArray(raw)) return [];
         return raw
-          .map((item) => ({
-            id: item && item.id != null ? String(item.id) : '',
-            qty: Number(item && item.qty),
-          }))
+          .map((item) => {
+            const opcoes = item && item.opcoes && typeof item.opcoes === 'object' && !Array.isArray(item.opcoes)
+              ? Object.fromEntries(Object.entries(item.opcoes).map(([k, v]) => [String(k), String(v)]))
+              : null;
+            return {
+              id: item && item.id != null ? String(item.id) : '',
+              qty: Number(item && item.qty),
+              opcoes: opcoes && Object.keys(opcoes).length ? opcoes : null,
+            };
+          })
           .filter((item) => item.id && Number.isSafeInteger(item.qty) && item.qty > 0);
       } catch (err) {
         return [];
@@ -1515,7 +1592,9 @@
 
     function persistCart() {
       try {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart.map((item) => ({ id: item.id, qty: item.qty }))));
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart.map((item) => (
+          item.opcoes ? { id: item.id, qty: item.qty, opcoes: item.opcoes } : { id: item.id, qty: item.qty }
+        ))));
       } catch (err) { /* carrinho segue só na memória */ }
     }
 
@@ -1523,11 +1602,15 @@
       return produtos.find((item) => item.id === id) || null;
     }
 
+    // O estoque é do produto: todos os sabores somam no mesmo número.
+    function qtyInCart(id) {
+      return cart.reduce((sum, item) => sum + (item.id === id ? item.qty : 0), 0);
+    }
+
     function remainingToAdd(id) {
       const product = productById(id);
       if (!product) return 0;
-      const inCart = cart.find((item) => item.id === id);
-      return Math.max(0, parseEstoque(product.estoque) - (inCart ? inCart.qty : 0));
+      return Math.max(0, parseEstoque(product.estoque) - qtyInCart(id));
     }
 
     function cartLines() {
@@ -1535,15 +1618,22 @@
         const product = productById(entry.id);
         const stock = product ? parseEstoque(product.estoque) : 0;
         const price = product ? parsePreco(product.preco) : 0;
+        const opts = product ? normalizeOpts(product, entry.opcoes) : entry.opcoes;
+        const optionsOk = !product || opts !== null;
+        const totalQty = qtyInCart(entry.id);
         return {
+          key: cartKey(entry.id, entry.opcoes),
           id: entry.id,
           qty: entry.qty,
+          opcoes: entry.opcoes,
           product,
-          nome: product && product.nome ? String(product.nome) : 'Produto indisponível',
+          nome: product ? variantName(product, opts || {}) : 'Produto indisponível',
           price,
           stock,
+          totalQty,
+          optionsOk,
           subtotal: roundMoney(price * entry.qty),
-          ok: Boolean(product) && price > 0 && stock >= entry.qty && entry.qty > 0,
+          ok: Boolean(product) && optionsOk && price > 0 && stock >= totalQty && entry.qty > 0,
         };
       });
     }
@@ -1558,7 +1648,8 @@
       cartLines().forEach((line) => {
         if (!line.product) problems.push('Há um item que não está mais no catálogo.');
         else if (line.stock <= 0) problems.push(line.nome + ' está esgotado.');
-        else if (line.qty > line.stock) problems.push('Estoque insuficiente para ' + line.nome + '.');
+        else if (!line.optionsOk) problems.push('Escolha de novo a opção de ' + String(line.product.nome || 'um produto') + ' (remova e adicione outra vez).');
+        else if (line.totalQty > line.stock) problems.push('Estoque insuficiente para ' + line.nome + '.');
         else if (line.price <= 0) problems.push(line.nome + ' está sem preço no cadastro.');
       });
       return problems;
@@ -1569,44 +1660,183 @@
       document.getElementById('cart-count').textContent = String(count);
     }
 
-    function productMatchesCategory(product, categoryKey) {
-      const cat = fold(product.categoria);
-      const key = fold(categoryKey);
-      if (!cat || !key) return false;
-      if (cat === key || cat.includes(key) || key.includes(cat)) return true;
-      const label = fold(CATEGORIAS[categoryKey] || '');
-      return Boolean(label) && (cat === label || cat.includes(label) || label.includes(cat));
+    function sanitizeCategorias(raw) {
+      if (!Array.isArray(raw)) return null;
+      const seen = new Set();
+      const list = [];
+      raw.forEach((item) => {
+        if (!item || typeof item !== 'object') return;
+        const nome = String(item.nome || '').trim().slice(0, 40);
+        const id = fold(item.id || nome).slice(0, 40);
+        if (!nome || !id || id === 'outros' || seen.has(id)) return;
+        seen.add(id);
+        const entry = { id, nome };
+        if (item.titulo && String(item.titulo).trim()) entry.titulo = String(item.titulo).trim().slice(0, 60);
+        list.push(entry);
+      });
+      return list.length ? list : null;
     }
 
-    function unmatchedProducts() {
-      const keys = Object.keys(CATEGORIAS);
-      return produtos.filter((product) => !keys.some((key) => productMatchesCategory(product, key)));
+    function categoryKeyOf(product) {
+      const cat = fold(product.categoria);
+      if (!cat) return 'outros';
+      const exact = categoriasLista.find((c) => fold(c.id) === cat || fold(c.nome) === cat);
+      if (exact) return exact.id;
+      const loose = categoriasLista.find((c) => [fold(c.id), fold(c.nome), fold(c.titulo)]
+        .some((k) => k && (cat.includes(k) || k.includes(cat))));
+      if (loose) return loose.id;
+      return 'x-' + cat;
+    }
+
+    function categoryLabel(key, long) {
+      if (key === 'outros') return 'Outros';
+      const known = categoriasLista.find((c) => c.id === key);
+      if (known) return long ? (known.titulo || known.nome) : known.nome;
+      const sample = produtos.find((product) => categoryKeyOf(product) === key);
+      return sample ? String(sample.categoriaNome || sample.categoria || 'Produtos').trim() : 'Produtos';
+    }
+
+    function visibleCategoryKeys() {
+      const present = new Set(produtos.map(categoryKeyOf));
+      const keys = categoriasLista.map((c) => c.id).filter((key) => present.has(key));
+      produtos.forEach((product) => {
+        const key = categoryKeyOf(product);
+        if (key.startsWith('x-') && !keys.includes(key)) keys.push(key);
+      });
+      if (present.has('outros')) keys.push('outros');
+      return keys;
     }
 
     function renderCategoryNav() {
-      const visible = Object.keys(CATEGORIAS).filter((key) => produtos.some((product) => productMatchesCategory(product, key)));
-      const outros = unmatchedProducts();
-      let outrosButton = document.querySelector('#menu-nav button[data-category="outros"]');
-      if (outros.length && !outrosButton) {
-        outrosButton = document.createElement('button');
-        outrosButton.type = 'button';
-        outrosButton.dataset.category = 'outros';
-        outrosButton.textContent = 'Outros';
-        document.getElementById('menu-nav').appendChild(outrosButton);
-      }
-      if (outrosButton) outrosButton.hidden = outros.length === 0;
-      if (outros.length) visible.push('outros');
-      document.querySelectorAll('#menu-nav button').forEach((button) => {
-        if (button.dataset.category === 'outros') return;
-        button.hidden = !visible.includes(button.dataset.category);
-      });
+      const visible = visibleCategoryKeys();
       if (!visible.includes(categoriaAtiva)) categoriaAtiva = visible[0] || '';
-      document.querySelectorAll('#menu-nav button').forEach((button) => {
-        button.classList.toggle('active', button.dataset.category === categoriaAtiva);
+      document.getElementById('menu-nav').innerHTML = visible.map((key) =>
+        '<button type="button" data-category="' + escapeHtml(key) + '"' + (key === categoriaAtiva ? ' class="active"' : '') + '>'
+        + escapeHtml(categoryLabel(key)) + '</button>'
+      ).join('');
+      document.getElementById('titulo-categoria').textContent = categoriaAtiva ? categoryLabel(categoriaAtiva, true) : 'Produtos';
+    }
+
+    // ===== Sabores / opções (mesmo preço) =====
+    function cleanOption(value, max) {
+      return String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
+    }
+
+    function optionGroups(product) {
+      if (!product) return [];
+      const groups = [];
+      const seenGroups = new Set();
+      const push = (nome, opcoes) => {
+        const groupName = cleanOption(nome, 40);
+        if (!groupName || seenGroups.has(fold(groupName)) || !Array.isArray(opcoes)) return;
+        const seen = new Set();
+        const values = [];
+        opcoes.forEach((raw) => {
+          const value = cleanOption(raw, 60);
+          if (!value || seen.has(value.toLowerCase())) return;
+          seen.add(value.toLowerCase());
+          values.push(value);
+        });
+        if (!values.length) return;
+        seenGroups.add(fold(groupName));
+        groups.push({ nome: groupName, opcoes: values });
+      };
+      if (Array.isArray(product.variacoes)) {
+        product.variacoes.forEach((group) => { if (group && typeof group === 'object') push(group.nome, group.opcoes); });
+      }
+      if (Array.isArray(product.sabores)) push('Sabor', product.sabores);
+      return groups;
+    }
+
+    // Devolve as opções válidas para o produto, ou null se faltar alguma.
+    function normalizeOpts(product, opts) {
+      const groups = optionGroups(product);
+      if (!groups.length) return {};
+      const out = {};
+      for (const group of groups) {
+        const wanted = opts && opts[group.nome] != null ? String(opts[group.nome]).toLowerCase() : '';
+        const match = group.opcoes.find((option) => option.toLowerCase() === wanted);
+        if (!match) return null;
+        out[group.nome] = match;
+      }
+      return out;
+    }
+
+    function missingGroup(product, opts) {
+      return optionGroups(product).find((group) => {
+        const value = opts && opts[group.nome];
+        return !value || !group.opcoes.includes(value);
+      }) || null;
+    }
+
+    function optValues(product, opts) {
+      return optionGroups(product).map((group) => (opts || {})[group.nome]).filter(Boolean);
+    }
+
+    function cartKey(id, opts) {
+      const values = Object.keys(opts || {}).sort().map((key) => key + '=' + opts[key]);
+      return values.length ? id + '|' + values.join('|') : id;
+    }
+
+    function variantName(product, opts) {
+      const base = product && product.nome ? String(product.nome) : 'Produto indisponível';
+      const values = optValues(product, opts);
+      return values.length ? base + ' – ' + values.join(' – ') : base;
+    }
+
+    function optionsHtml(product) {
+      const id = String(product.id);
+      const chosen = selectedOpts[id] || {};
+      return optionGroups(product).map((group) => {
+        const value = chosen[group.nome];
+        const label = value
+          ? '<strong>' + escapeHtml(value) + '</strong>'
+          : '<span class="opt-hint">escolha uma opção</span>';
+        return '<div class="opt-group" data-opt-product="' + escapeHtml(id) + '" data-group="' + escapeHtml(group.nome) + '">'
+          + '<div class="opt-label">' + escapeHtml(group.nome) + ': ' + label + '</div>'
+          + '<div class="opt-row" role="group" aria-label="' + escapeHtml(group.nome) + '">'
+          + group.opcoes.map((option) =>
+            '<button type="button" class="opt-chip' + (option === value ? ' active' : '') + '" data-opt="' + escapeHtml(id)
+            + '" data-group="' + escapeHtml(group.nome) + '" data-value="' + escapeHtml(option) + '" aria-pressed="' + (option === value) + '">'
+            + escapeHtml(option) + '</button>'
+          ).join('')
+          + '</div></div>';
+      }).join('');
+    }
+
+    // Mostra um esmaecido à direita quando há mais sabores para rolar.
+    function markOptionOverflow(row) {
+      const rows = row ? [row] : document.querySelectorAll('.opt-row');
+      rows.forEach((el) => {
+        el.classList.toggle('more', el.scrollWidth - el.clientWidth - el.scrollLeft > 4);
       });
-      document.getElementById('titulo-categoria').textContent = categoriaAtiva === 'outros'
-        ? 'Outros'
-        : (CATEGORIAS[categoriaAtiva] || 'Produtos');
+    }
+
+    function chooseOption(chip) {
+      const id = chip.dataset.opt;
+      const groupName = chip.dataset.group;
+      const value = chip.dataset.value;
+      selectedOpts[id] = { ...(selectedOpts[id] || {}), [groupName]: value };
+      document.querySelectorAll('.opt-group').forEach((box) => {
+        if (box.dataset.optProduct !== id || box.dataset.group !== groupName) return;
+        box.classList.remove('need');
+        box.querySelectorAll('.opt-chip').forEach((other) => {
+          const on = other.dataset.value === value;
+          other.classList.toggle('active', on);
+          other.setAttribute('aria-pressed', String(on));
+        });
+        const label = box.querySelector('.opt-label');
+        label.replaceChildren(document.createTextNode(groupName + ': '));
+        const strong = document.createElement('strong');
+        strong.textContent = value;
+        label.appendChild(strong);
+      });
+    }
+
+    function flagMissing(id, groupName) {
+      document.querySelectorAll('.opt-group').forEach((box) => {
+        if (box.dataset.optProduct === id && box.dataset.group === groupName) box.classList.add('need');
+      });
     }
 
     function renderProducts() {
@@ -1615,9 +1845,7 @@
         list.innerHTML = '<p class="empty-state">Nenhum produto disponível no momento.</p>';
         return;
       }
-      const filtered = categoriaAtiva === 'outros'
-        ? unmatchedProducts()
-        : produtos.filter((product) => productMatchesCategory(product, categoriaAtiva));
+      const filtered = produtos.filter((product) => categoryKeyOf(product) === categoriaAtiva);
       if (!filtered.length) {
         list.innerHTML = '<p class="empty-state">Nenhum produto disponível nesta categoria.</p>';
         return;
@@ -1653,6 +1881,7 @@
               ${badge}
             </div>
             <div class="prod-nome">${escapeHtml(product.nome || 'Produto')}</div>
+            ${soldOut ? '' : optionsHtml(product)}
             <div class="prod-preco">${price > 0 ? escapeHtml(formatMoney(price)) : 'Preço indisponível'}</div>
             <div class="product-controls">${controls}
               <button type="button" class="details-btn" data-open="${escapeHtml(id)}">Ver detalhes</button>
@@ -1661,6 +1890,7 @@
           </div>
         </article>`;
       }).join('');
+      requestAnimationFrame(() => markOptionOverflow());
     }
 
     function renderCart() {
@@ -1689,6 +1919,7 @@
         value.className = 'valor';
         if (!productsReady) value.textContent = 'Carregando estoque...';
         else if (!line.product || line.stock <= 0) value.textContent = 'Esgotado';
+        else if (!line.optionsOk) value.textContent = 'Opção indisponível';
         else value.textContent = formatMoney(line.subtotal);
         info.append(name, value);
         const qty = document.createElement('div');
@@ -1697,21 +1928,21 @@
         dec.type = 'button';
         dec.textContent = '−';
         dec.setAttribute('aria-label', 'Diminuir quantidade');
-        dec.addEventListener('click', () => changeCartQty(line.id, -1));
+        dec.addEventListener('click', () => changeCartQty(line.key, -1));
         const num = document.createElement('span');
         num.textContent = String(line.qty);
         const inc = document.createElement('button');
         inc.type = 'button';
         inc.textContent = '+';
         inc.setAttribute('aria-label', 'Aumentar quantidade');
-        inc.disabled = !line.product || line.qty >= line.stock;
-        inc.addEventListener('click', () => changeCartQty(line.id, 1));
+        inc.disabled = !line.product || line.totalQty >= line.stock;
+        inc.addEventListener('click', () => changeCartQty(line.key, 1));
         qty.append(dec, num, inc);
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'cart-item-remove';
         remove.textContent = 'Remover';
-        remove.addEventListener('click', () => removeFromCart(line.id));
+        remove.addEventListener('click', () => removeFromCart(line.key));
         row.append(info, qty, remove);
         box.appendChild(row);
       });
@@ -1735,14 +1966,22 @@
       if (stock <= 0 || price <= 0) return;
       const addQty = qty == null ? (selectedQty[id] || 1) : Number(qty);
       if (!Number.isSafeInteger(addQty) || addQty < 1) return;
-      const existing = cart.find((item) => item.id === id);
-      const already = existing ? existing.qty : 0;
-      if (already + addQty > stock) {
+      const missing = missingGroup(product, selectedOpts[id]);
+      if (missing) {
+        flagMissing(id, missing.nome);
+        showToast('Escolha ' + missing.nome.toLowerCase() + ' antes de adicionar');
+        return;
+      }
+      const opts = normalizeOpts(product, selectedOpts[id]) || {};
+      const opcoes = Object.keys(opts).length ? opts : null;
+      const key = cartKey(id, opcoes);
+      if (qtyInCart(id) + addQty > stock) {
         showToast('Quantidade maior que o estoque');
         return;
       }
+      const existing = cart.find((item) => cartKey(item.id, item.opcoes) === key);
       if (existing) existing.qty += addQty;
-      else cart.push({ id: id, qty: addQty });
+      else cart.push(opcoes ? { id: id, qty: addQty, opcoes: opcoes } : { id: id, qty: addQty });
       selectedQty[id] = 1;
       persistCart();
       updateCartCount();
@@ -1759,6 +1998,7 @@
         items: [{
           item_id: id,
           item_name: String(product.nome || ''),
+          item_variant: optValues(product, opts).join(' / ') || undefined,
           item_category: String(product.categoria || ''),
           price: price,
           quantity: addQty,
@@ -1766,17 +2006,18 @@
       });
     }
 
-    function changeCartQty(id, delta) {
-      const line = cart.find((item) => item.id === id);
-      const product = productById(id);
+    function changeCartQty(key, delta) {
+      const line = cart.find((item) => cartKey(item.id, item.opcoes) === key);
       if (!line) return;
+      const id = line.id;
+      const product = productById(id);
       const next = line.qty + delta;
       if (next <= 0) {
-        removeFromCart(id);
+        removeFromCart(key);
         return;
       }
       const stock = product ? parseEstoque(product.estoque) : 0;
-      if (product && next > stock) return;
+      if (product && delta > 0 && qtyInCart(id) + delta > stock) return;
       line.qty = next;
       persistCart();
       updateCartCount();
@@ -1785,8 +2026,10 @@
       if (modalProductId === id) syncModalQty();
     }
 
-    function removeFromCart(id) {
-      cart = cart.filter((item) => item.id !== id);
+    function removeFromCart(key) {
+      const removed = cart.find((item) => cartKey(item.id, item.opcoes) === key);
+      const id = removed ? removed.id : key;
+      cart = cart.filter((item) => cartKey(item.id, item.opcoes) !== key);
       persistCart();
       updateCartCount();
       renderProducts();
@@ -1821,6 +2064,7 @@
         <div class="sheet-body">
           <button type="button" class="icon-close" data-close-product aria-label="Fechar">&times;</button>
           <h2 class="dialog-title" id="sheet-title">${escapeHtml(product.nome || 'Produto')}</h2>
+          ${stock > 0 && price > 0 ? optionsHtml(product) : ''}
           <div class="prod-preco">${price > 0 ? escapeHtml(formatMoney(price)) : 'Preço indisponível'}</div>
           <p class="sheet-desc">${desc ? escapeHtml(desc) : 'Sem descrição informada.'}</p>
           <p class="prod-estoque ${info.className}" id="sheet-stock">${escapeHtml(info.label)}</p>
@@ -1829,6 +2073,7 @@
       document.getElementById('modal-produto-bg').hidden = false;
       document.body.classList.add('modal-open');
       syncModalQty();
+      requestAnimationFrame(() => markOptionOverflow());
     }
 
     function syncModalQty() {
@@ -2277,7 +2522,14 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              cartItems: cart.map((item) => ({ id: item.id, quantity: item.qty })),
+              cartItems: cart.map((item) => {
+                const payload = { id: item.id, quantity: item.qty };
+                if (item.opcoes) {
+                  payload.opcoes = item.opcoes;
+                  if (item.opcoes.Sabor) payload.sabor = item.opcoes.Sabor;
+                }
+                return payload;
+              }),
               customer: payloadCustomer,
               taxaEntrega: currentTaxaEntrega(),
             }),
@@ -2343,7 +2595,7 @@
     async function fetchProducts() {
       try {
         const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { getFirestore, collection, getDocs, getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
         const firebaseConfig = {
           apiKey: 'AIzaSyCp_OqBcWSgldoB4Jm4eRxyJRomA23Gnc0',
           authDomain: 'power-lab-suplementos.firebaseapp.com',
@@ -2355,7 +2607,12 @@
         const existing = getApps().find((app) => app.name === 'loja');
         const app = existing || initializeApp(firebaseConfig, 'loja');
         const db = getFirestore(app);
-        const snap = await getDocs(collection(db, 'produtos'));
+        const [snap, configSnap] = await Promise.all([
+          getDocs(collection(db, 'produtos')),
+          getDoc(doc(db, 'config', 'categorias')).catch(() => null),
+        ]);
+        const savedCategorias = configSnap && configSnap.exists() ? sanitizeCategorias((configSnap.data() || {}).lista) : null;
+        if (savedCategorias) categoriasLista = savedCategorias;
         produtos = snap.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
         productsReady = true;
         const stored = readStoredCart();
@@ -2364,7 +2621,7 @@
           if (!product) return entry;
           const stock = parseEstoque(product.estoque);
           if (stock <= 0) return entry;
-          return { id: entry.id, qty: Math.min(entry.qty, stock) };
+          return { ...entry, qty: Math.min(entry.qty, stock) };
         });
         persistCart();
         renderCategoryNav();
@@ -2379,6 +2636,13 @@
     }
 
     document.getElementById('product-list').addEventListener('click', (event) => {
+      const chip = event.target.closest('[data-opt]');
+      if (chip) {
+        event.stopPropagation();
+        chooseOption(chip);
+        return;
+      }
+      if (event.target.closest('.opt-group')) return;
       const qtyBtn = event.target.closest('[data-qty]');
       if (qtyBtn) {
         event.stopPropagation();
@@ -2398,6 +2662,7 @@
 
     document.getElementById('modal-produto-card').addEventListener('click', (event) => {
       if (event.target.closest('[data-close-product]')) closeProduct();
+      else if (event.target.closest('[data-opt]')) chooseOption(event.target.closest('[data-opt]'));
       else if (event.target.closest('[data-modal-dec]')) {
         modalQty = Math.max(1, modalQty - 1);
         syncModalQty();
@@ -2411,6 +2676,11 @@
         openZoom(img.src, img.alt);
       }
     });
+
+    document.addEventListener('scroll', (event) => {
+      if (event.target instanceof Element && event.target.classList.contains('opt-row')) markOptionOverflow(event.target);
+    }, true);
+    window.addEventListener('resize', () => markOptionOverflow());
 
     document.getElementById('menu-nav').addEventListener('click', (event) => {
       const button = event.target.closest('button');
