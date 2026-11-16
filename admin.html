@@ -811,6 +811,48 @@
       margin-bottom: 18px;
     }
 
+    .label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .link-btn {
+      background: none; border: none; padding: 0; cursor: pointer;
+      color: var(--vermelho); font-size: 0.78em; font-weight: 700; font-family: 'Montserrat', sans-serif;
+    }
+    .link-btn:hover { text-decoration: underline; }
+    .hint { color: #888; font-size: 0.78em; line-height: 1.5; }
+    .var-group {
+      background: #1c1c1e; border: 1.5px solid var(--cinza-borda); border-radius: 8px;
+      padding: 12px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .var-head { display: flex; gap: 8px; align-items: center; }
+    .var-head .form-input { flex: 1; min-width: 0; max-width: 220px; }
+    #section-cadastrar .form-group { min-width: 0; }
+    .label-row .form-label { white-space: nowrap; }
+    .var-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 8px; }
+    .var-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(232,0,13,0.10); border: 1.5px solid var(--vermelho); border-radius: 6px;
+      padding: 6px 6px 6px 12px; font-size: 0.85em; font-weight: 600; color: #fff;
+    }
+    .var-chip button {
+      background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.15em; line-height: 1;
+      width: 22px; height: 22px; border-radius: 4px;
+    }
+    .var-chip button:hover { background: var(--vermelho); color: #fff; }
+    .var-add { display: flex; gap: 8px; }
+    .var-add .form-input { flex: 1; min-width: 0; }
+    .btn-mini {
+      background: #2e2e32; color: #fff; border: 1.5px solid var(--cinza-borda); border-radius: 6px;
+      padding: 8px 12px; cursor: pointer; font-weight: 700; font-size: 0.82em; white-space: nowrap;
+    }
+    .btn-mini:hover:not([disabled]) { border-color: var(--vermelho); }
+    .btn-mini[disabled] { opacity: .4; cursor: not-allowed; }
+    .btn-mini.danger:hover:not([disabled]) { background: var(--vermelho); }
+    .cat-row {
+      display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #2a2a2e;
+    }
+    .cat-row strong { flex: 1; }
+    .cat-row .count { color: #888; font-size: 0.8em; min-width: 80px; }
+    .td-variacoes { display: block; color: #888; font-size: 0.75em; font-weight: 600; margin-top: 3px; text-transform: none; }
+
     .chart-card { min-height: 300px; }
     .chart-card canvas { width: 100% !important; height: 240px !important; }
 
@@ -1089,6 +1131,19 @@
             </div>
             <p id="token-estado" class="form-label" style="margin-top:12px;"></p>
           </div>
+          <div class="settings-card" id="card-categorias">
+            <h3 style="margin-bottom:6px;">Categorias da loja</h3>
+            <p class="hint" style="margin-bottom:10px;">
+              Viram as abas do site, na ordem desta lista. Só aparecem no site as que têm produto.
+              Para remover, mude antes os produtos para outra categoria.
+            </p>
+            <div id="lista-categorias"></div>
+            <div class="var-add" style="margin-top:12px;max-width:520px;">
+              <input type="text" id="nova-categoria" class="form-input" maxlength="40" placeholder="Nova categoria (ex.: Carbo Gel)">
+              <button type="button" class="btn-mini" id="btn-add-categoria">+ Adicionar</button>
+            </div>
+            <p id="categorias-estado" class="hint" style="margin-top:10px;"></p>
+          </div>
         </section>
 
         <!-- PRODUTOS -->
@@ -1138,7 +1193,10 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">Categoria *</label>
+                <div class="label-row">
+                  <label class="form-label" for="prod-categoria">Categoria *</label>
+                  <button type="button" class="link-btn" id="btn-gerenciar-categorias">Gerenciar categorias</button>
+                </div>
                 <select id="prod-categoria" class="form-select">
                   <option value="">Selecione...</option>
                   <option value="proteinas">Proteínas</option>
@@ -1151,6 +1209,19 @@
               <div class="form-group">
                 <label class="form-label">Quantidade em Estoque *</label>
                 <input type="number" id="prod-estoque" class="form-input" placeholder="Ex: 50" min="0">
+              </div>
+
+              <div class="form-group full">
+                <label class="form-label">Sabores / opções</label>
+                <p class="hint">
+                  Um produto só, com botões de sabor no site. O preço é o mesmo para todas as opções e o
+                  estoque acima vale para o produto inteiro (soma de todos os sabores). Deixe vazio se o
+                  produto não tem sabor.
+                </p>
+                <div id="variacoes-box" style="display:flex;flex-direction:column;gap:10px;"></div>
+                <div>
+                  <button type="button" class="btn-mini" id="btn-add-grupo">+ Outro tipo de opção (ex.: Tamanho)</button>
+                </div>
               </div>
 
               <div class="form-group full">
@@ -1222,7 +1293,7 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp }
+    import { getFirestore, collection, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, serverTimestamp }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     import { getStorage, ref, uploadBytesResumable, getDownloadURL }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
@@ -1338,6 +1409,273 @@
 
     // ===== PRODUTOS =====
     let todosProdutos = [];
+
+    // ===== CATEGORIAS =====
+    // Lista em Firestore config/categorias ({ lista: [{ id, nome }] }). Se ainda não
+    // existir, usa esta lista padrão. O produto grava categoria (id) e categoriaNome.
+    const DEFAULT_CATEGORIAS = [
+      { id: 'proteinas', nome: 'Proteínas' },
+      { id: 'pretreinos', nome: 'Pré-treinos', titulo: 'Pré-treinos e Energéticos' },
+      { id: 'vitaminas', nome: 'Vitaminas', titulo: 'Vitaminas e Minerais' },
+      { id: 'emagrecedores', nome: 'Emagrecedores', titulo: 'Emagrecedores e Termogênicos' },
+      { id: 'cremes', nome: 'Cremes', titulo: 'Cremes e Pastas de Amendoim' },
+      { id: 'carbogel', nome: 'Carbo Gel' },
+      { id: 'barrinhas', nome: 'Barrinhas' },
+      { id: 'roupas', nome: 'Roupas' },
+    ];
+    let categorias = DEFAULT_CATEGORIAS.map((c) => ({ ...c }));
+    let categoriasSalvas = false;
+
+    function slugCategoria(value) {
+      return String(value || '').trim().toLowerCase().normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').slice(0, 40);
+    }
+
+    function categoriaDoProduto(product) {
+      const cat = slugCategoria(product && product.categoria);
+      if (!cat) return null;
+      return categorias.find((c) => c.id === cat || slugCategoria(c.nome) === cat)
+        || categorias.find((c) => [c.id, slugCategoria(c.nome), slugCategoria(c.titulo)].some((k) => k && (cat.includes(k) || k.includes(cat))))
+        || null;
+    }
+
+    function nomeCategoria(product) {
+      const c = categoriaDoProduto(product);
+      if (c) return c.nome;
+      return String((product && (product.categoriaNome || product.categoria)) || '—');
+    }
+
+    function contarProdutos(id) {
+      return todosProdutos.filter((product) => { const c = categoriaDoProduto(product); return c && c.id === id; }).length;
+    }
+
+    async function carregarCategorias() {
+      if (DEMO) return;
+      try {
+        const snap = await getDoc(doc(db, 'config', 'categorias'));
+        const lista = snap.exists() ? (snap.data() || {}).lista : null;
+        if (Array.isArray(lista) && lista.length) {
+          categorias = lista
+            .filter((c) => c && c.id && c.nome)
+            .map((c) => ({ id: slugCategoria(c.id), nome: String(c.nome).trim(), ...(c.titulo ? { titulo: String(c.titulo) } : {}) }));
+          categoriasSalvas = true;
+        }
+      } catch (e) {
+        console.warn('Categorias: usando a lista padrão.', e);
+      }
+      // Categoria que só existe no produto entra na lista para não sumir do formulário.
+      todosProdutos.forEach((product) => {
+        if (product.categoria && !categoriaDoProduto(product)) {
+          const id = slugCategoria(product.categoria);
+          if (id && !categorias.some((c) => c.id === id)) {
+            categorias.push({ id, nome: String(product.categoriaNome || product.categoria).trim() });
+          }
+        }
+      });
+    }
+
+    async function salvarCategorias() {
+      const estado = document.getElementById('categorias-estado');
+      if (DEMO) {
+        estado.textContent = 'Demonstração: categorias não foram gravadas.';
+        return true;
+      }
+      try {
+        await setDoc(doc(db, 'config', 'categorias'), { lista: categorias, updatedAt: serverTimestamp() });
+        categoriasSalvas = true;
+        estado.textContent = 'Categorias salvas.';
+        return true;
+      } catch (e) {
+        console.error(e);
+        estado.textContent = 'Não foi possível gravar a lista (permissão do Firestore). A categoria vale para os produtos que você salvar; peça para publicar a regra config/categorias.';
+        showToast('Categoria criada só neste painel: falta a regra do Firestore para gravar a lista.', 'error');
+        return false;
+      }
+    }
+
+    function renderSelectCategorias(valor) {
+      const select = document.getElementById('prod-categoria');
+      const atual = valor != null ? valor : select.value;
+      select.innerHTML = '<option value="">Selecione...</option>'
+        + categorias.map((c) => '<option value="' + escapeHtml(c.id) + '">' + escapeHtml(c.nome) + '</option>').join('')
+        + '<option value="__nova__">+ Nova categoria...</option>';
+      const match = categoriaDoProduto({ categoria: atual });
+      select.value = match ? match.id : '';
+    }
+
+    function renderCategorias() {
+      const el = document.getElementById('lista-categorias');
+      if (!el) return;
+      el.innerHTML = categorias.map((c, index) => {
+        const n = contarProdutos(c.id);
+        return '<div class="cat-row">'
+          + '<strong>' + escapeHtml(c.nome) + '</strong>'
+          + '<span class="count">' + n + ' produto' + (n === 1 ? '' : 's') + '</span>'
+          + '<button type="button" class="btn-mini" data-cat-up="' + index + '"' + (index === 0 ? ' disabled' : '') + ' aria-label="Subir">↑</button>'
+          + '<button type="button" class="btn-mini" data-cat-rename="' + index + '">Renomear</button>'
+          + '<button type="button" class="btn-mini danger" data-cat-remove="' + index + '"' + (n ? ' disabled title="Mude os produtos desta categoria antes de remover"' : '') + '>Remover</button>'
+          + '</div>';
+      }).join('');
+      renderSelectCategorias();
+    }
+
+    async function adicionarCategoria(nomeBruto) {
+      const nome = String(nomeBruto || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+      const id = slugCategoria(nome);
+      if (!id || id === 'outros' || id.startsWith('nova')) {
+        showToast('Informe um nome de categoria válido.', 'error');
+        return null;
+      }
+      const existente = categorias.find((c) => c.id === id);
+      if (existente) {
+        showToast('Essa categoria já existe.', 'error');
+        return existente;
+      }
+      const nova = { id, nome };
+      categorias.push(nova);
+      renderCategorias();
+      await salvarCategorias();
+      return nova;
+    }
+
+    document.getElementById('prod-categoria').addEventListener('change', async (event) => {
+      if (event.target.value !== '__nova__') return;
+      const nome = window.prompt('Nome da nova categoria (ex.: Carbo Gel, Barrinhas, Roupas):', '');
+      if (!nome) {
+        event.target.value = '';
+        return;
+      }
+      const nova = await adicionarCategoria(nome);
+      renderSelectCategorias(nova ? nova.id : '');
+    });
+    document.getElementById('btn-gerenciar-categorias').addEventListener('click', () => {
+      showSection('config');
+      document.getElementById('card-categorias').scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('btn-add-categoria').addEventListener('click', async () => {
+      const input = document.getElementById('nova-categoria');
+      if (await adicionarCategoria(input.value)) input.value = '';
+    });
+    document.getElementById('nova-categoria').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('btn-add-categoria').click();
+      }
+    });
+    document.getElementById('lista-categorias').addEventListener('click', async (event) => {
+      const up = event.target.closest('[data-cat-up]');
+      const rename = event.target.closest('[data-cat-rename]');
+      const remove = event.target.closest('[data-cat-remove]');
+      if (up) {
+        const i = Number(up.dataset.catUp);
+        if (i > 0) [categorias[i - 1], categorias[i]] = [categorias[i], categorias[i - 1]];
+      } else if (rename) {
+        const c = categorias[Number(rename.dataset.catRename)];
+        const nome = window.prompt('Novo nome para "' + c.nome + '":', c.nome);
+        if (!nome || !nome.trim()) return;
+        c.nome = nome.trim().replace(/\s+/g, ' ').slice(0, 40);
+        delete c.titulo;
+      } else if (remove) {
+        const i = Number(remove.dataset.catRemove);
+        const c = categorias[i];
+        if (contarProdutos(c.id)) return;
+        if (!window.confirm('Remover a categoria "' + c.nome + '"?')) return;
+        categorias.splice(i, 1);
+      } else {
+        return;
+      }
+      renderCategorias();
+      await salvarCategorias();
+      renderizarTabela();
+    });
+
+    // ===== SABORES / OPÇÕES =====
+    let formVariacoes = [{ nome: 'Sabor', opcoes: [] }];
+
+    function variacoesDoProduto(p) {
+      const grupos = [];
+      const vistos = new Set();
+      const add = (nome, opcoes) => {
+        const n = String(nome || '').trim();
+        if (!n || vistos.has(n.toLowerCase()) || !Array.isArray(opcoes)) return;
+        const lista = [];
+        opcoes.forEach((o) => {
+          const v = String(o ?? '').trim().replace(/\s+/g, ' ');
+          if (v && !lista.some((x) => x.toLowerCase() === v.toLowerCase())) lista.push(v);
+        });
+        if (!lista.length) return;
+        vistos.add(n.toLowerCase());
+        grupos.push({ nome: n, opcoes: lista });
+      };
+      if (p && Array.isArray(p.variacoes)) p.variacoes.forEach((g) => g && add(g.nome, g.opcoes));
+      if (p && Array.isArray(p.sabores)) add('Sabor', p.sabores);
+      return grupos;
+    }
+
+    function renderVariacoes() {
+      const box = document.getElementById('variacoes-box');
+      box.innerHTML = formVariacoes.map((grupo, gi) => '<div class="var-group">'
+        + '<div class="var-head">'
+        + '<input type="text" class="form-input" data-var-nome="' + gi + '" maxlength="40" value="' + escapeHtml(grupo.nome) + '" aria-label="Tipo de opção">'
+        + (gi > 0 ? '<button type="button" class="btn-mini danger" data-var-del-grupo="' + gi + '">Remover tipo</button>' : '')
+        + '</div>'
+        + '<div class="var-chips">' + (grupo.opcoes.length
+          ? grupo.opcoes.map((opcao, oi) => '<span class="var-chip">' + escapeHtml(opcao)
+            + '<button type="button" data-var-del="' + gi + ':' + oi + '" aria-label="Remover ' + escapeHtml(opcao) + '">&times;</button></span>').join('')
+          : '<span class="hint">Nenhuma opção ainda.</span>')
+        + '</div>'
+        + '<div class="var-add">'
+        + '<input type="text" class="form-input" data-var-input="' + gi + '" maxlength="200" placeholder="' + (gi === 0 ? 'Ex.: Chocolate, Baunilha, Morango' : 'Ex.: 900 g, 1,8 kg') + '">'
+        + '<button type="button" class="btn-mini" data-var-add="' + gi + '">+ Adicionar</button>'
+        + '</div>'
+        + '</div>').join('');
+    }
+
+    function adicionarOpcoes(gi) {
+      const input = document.querySelector('[data-var-input="' + gi + '"]');
+      const grupo = formVariacoes[gi];
+      if (!input || !grupo) return;
+      // Aceita várias de uma vez separadas por vírgula ou ponto e vírgula.
+      input.value.split(/[;,\n]/).forEach((raw) => {
+        const v = raw.trim().replace(/\s+/g, ' ').slice(0, 60);
+        if (v && !grupo.opcoes.some((x) => x.toLowerCase() === v.toLowerCase())) grupo.opcoes.push(v);
+      });
+      renderVariacoes();
+      const again = document.querySelector('[data-var-input="' + gi + '"]');
+      if (again) again.focus();
+    }
+
+    document.getElementById('variacoes-box').addEventListener('click', (event) => {
+      const add = event.target.closest('[data-var-add]');
+      const del = event.target.closest('[data-var-del]');
+      const delGrupo = event.target.closest('[data-var-del-grupo]');
+      if (add) adicionarOpcoes(Number(add.dataset.varAdd));
+      else if (del) {
+        const [gi, oi] = del.dataset.varDel.split(':').map(Number);
+        formVariacoes[gi].opcoes.splice(oi, 1);
+        renderVariacoes();
+      } else if (delGrupo) {
+        formVariacoes.splice(Number(delGrupo.dataset.varDelGrupo), 1);
+        renderVariacoes();
+      }
+    });
+    document.getElementById('variacoes-box').addEventListener('keydown', (event) => {
+      const input = event.target.closest('[data-var-input]');
+      if (input && event.key === 'Enter') {
+        event.preventDefault();
+        adicionarOpcoes(Number(input.dataset.varInput));
+      }
+    });
+    document.getElementById('variacoes-box').addEventListener('input', (event) => {
+      const nome = event.target.closest('[data-var-nome]');
+      if (nome) formVariacoes[Number(nome.dataset.varNome)].nome = nome.value;
+    });
+    document.getElementById('btn-add-grupo').addEventListener('click', () => {
+      formVariacoes.push({ nome: formVariacoes.length ? 'Tamanho' : 'Sabor', opcoes: [] });
+      renderVariacoes();
+    });
+    renderVariacoes();
+    renderCategorias();
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -1522,9 +1860,11 @@
     async function carregarTudo() {
       try {
         await carregarProdutos();
+        await carregarCategorias();
         await carregarPedidos();
         renderPainel();
         renderizarTabela();
+        renderCategorias();
       } catch (e) {
         showToast('Erro ao carregar: ' + e.message, 'error');
       }
@@ -1599,7 +1939,7 @@
       const map = new Map();
       list.forEach((order) => {
         (order.items || []).forEach((item) => {
-          const key = String(item.id || item.nome);
+          const key = String(item.id || '') + '|' + String(item.nome || '');
           const row = map.get(key) || { nome: item.nome || 'Produto', qty: 0, revenue: 0 };
           row.qty += Number(item.quantidade || 0);
           row.revenue += Number(item.subtotal || 0);
@@ -1831,7 +2171,8 @@
 
     function iniciarDemo() {
       todosProdutos = [
-        { id: 'whey', nome: 'Whey Protein', preco: 89.9, estoque: 40, categoria: 'proteinas', descricao: 'Isolate', imgurl: '' },
+        { id: 'whey', nome: 'Whey Protein Isolado', preco: 89.9, estoque: 40, categoria: 'proteinas', descricao: 'Isolate', imgurl: '', sabores: ['Chocolate', 'Baunilha', 'Morango'] },
+        { id: 'gel', nome: 'Carbo Gel 30g', preco: 6.5, estoque: 30, categoria: 'carbogel', categoriaNome: 'Carbo Gel', descricao: '', imgurl: '', sabores: ['Guaraná com Açaí', 'Limão'] },
         { id: 'profit', nome: 'Whey Profit 900g', preco: 124.9, estoque: 2, categoria: 'proteinas', descricao: '', imgurl: '' },
         { id: 'crea', nome: 'Creatina 300g', preco: 79.9, estoque: 0, categoria: 'pretreinos', descricao: '', imgurl: '' },
         { id: 'vita', nome: 'Vitamina D', preco: 39.9, estoque: 12, categoria: 'vitaminas', descricao: '', imgurl: '' },
@@ -1851,6 +2192,7 @@
       pedidosErro = '';
       renderPainel();
       renderizarTabela();
+      renderCategorias();
     }
 
     function pedidoDemo(id, dias, status, nome, telefone, entrega, taxa, km, items) {
@@ -1903,9 +2245,9 @@
             ${lista.map(p => `
               <tr>
                 <td><img class="td-img" src="${p.imgurl || 'https://placehold.co/48x48/252528/e8000d?text=+'}" alt="${p.nome}"></td>
-                <td class="td-nome">${p.nome}</td>
+                <td class="td-nome">${escapeHtml(p.nome)}${(() => { const g = variacoesDoProduto(p); return g.length ? '<span class="td-variacoes">' + g.map((x) => escapeHtml(x.nome) + ': ' + x.opcoes.length).join(' · ') + '</span>' : ''; })()}</td>
                 <td class="td-preco">R$ ${parseFloat(p.preco).toFixed(2).replace('.', ',')}</td>
-                <td class="td-categoria">${p.categoria || '—'}</td>
+                <td class="td-categoria">${escapeHtml(nomeCategoria(p))}</td>
                 <td>${badgeEstoque(p.estoque)}</td>
                 <td>
                   <div class="td-acoes">
@@ -1935,7 +2277,8 @@
       const termo = document.getElementById('search-produtos').value.toLowerCase();
       const filtrado = todosProdutos.filter(p =>
         p.nome.toLowerCase().includes(termo) ||
-        (p.categoria || '').toLowerCase().includes(termo)
+        (p.categoria || '').toLowerCase().includes(termo) ||
+        nomeCategoria(p).toLowerCase().includes(termo)
       );
       renderizarTabela(filtrado);
     }
@@ -1945,7 +2288,15 @@
       const id       = document.getElementById('produto-id').value;
       const nome     = document.getElementById('prod-nome').value.trim();
       const preco    = parseFloat(document.getElementById('prod-preco').value);
-      const categoria= document.getElementById('prod-categoria').value;
+      const categoriaSel = document.getElementById('prod-categoria').value;
+      const categoria = categoriaSel === '__nova__' ? '' : categoriaSel;
+      const categoriaObj = categorias.find((c) => c.id === categoria);
+      const categoriaNome = categoriaObj ? categoriaObj.nome : categoria;
+      const variacoes = formVariacoes
+        .map((g) => ({ nome: String(g.nome || '').trim().slice(0, 40), opcoes: g.opcoes.slice() }))
+        .filter((g) => g.nome && g.opcoes.length);
+      const grupoSabor = variacoes.find((g) => g.nome.toLowerCase() === 'sabor');
+      const sabores = grupoSabor ? grupoSabor.opcoes : [];
       const estoque  = parseInt(document.getElementById('prod-estoque').value);
       const descricao= document.getElementById('prod-descricao').value.trim();
       const arquivo  = document.getElementById('prod-imagem').files[0];
@@ -1962,9 +2313,9 @@
       if (DEMO) {
         if (id) {
           const atual = todosProdutos.find(x => x.id === id);
-          if (atual) Object.assign(atual, { nome, preco, categoria, estoque, descricao });
+          if (atual) Object.assign(atual, { nome, preco, categoria, categoriaNome, estoque, descricao, variacoes, sabores });
         } else {
-          todosProdutos.push({ id: 'demo-' + Date.now(), nome, preco, categoria, estoque, descricao, imgurl: '' });
+          todosProdutos.push({ id: 'demo-' + Date.now(), nome, preco, categoria, categoriaNome, estoque, descricao, variacoes, sabores, imgurl: '' });
         }
         showToast('Demonstração: produto não foi gravado.', 'success');
         limparForm();
@@ -1988,8 +2339,11 @@
           nome,
           preco,
           categoria,
+          categoriaNome,
           estoque,
           descricao,
+          variacoes,
+          sabores,
           imgurl,
           updatedAt: serverTimestamp()
         };
@@ -2009,6 +2363,7 @@
         await carregarProdutos();
         renderPainel();
         renderizarTabela();
+        renderCategorias();
         showSection('produtos');
 
       } catch (e) {
@@ -2050,7 +2405,10 @@
       document.getElementById('produto-id').value = id;
       document.getElementById('prod-nome').value = p.nome;
       document.getElementById('prod-preco').value = p.preco;
-      document.getElementById('prod-categoria').value = p.categoria;
+      renderSelectCategorias(p.categoria || '');
+      formVariacoes = variacoesDoProduto(p);
+      if (!formVariacoes.length) formVariacoes = [{ nome: 'Sabor', opcoes: [] }];
+      renderVariacoes();
       document.getElementById('prod-estoque').value = p.estoque;
       document.getElementById('prod-descricao').value = p.descricao || '';
       document.getElementById('form-titulo').textContent = 'Editar';
@@ -2072,6 +2430,8 @@
       document.getElementById('prod-nome').value = '';
       document.getElementById('prod-preco').value = '';
       document.getElementById('prod-categoria').value = '';
+      formVariacoes = [{ nome: 'Sabor', opcoes: [] }];
+      renderVariacoes();
       document.getElementById('prod-estoque').value = '';
       document.getElementById('prod-descricao').value = '';
       document.getElementById('prod-imagem').value = '';

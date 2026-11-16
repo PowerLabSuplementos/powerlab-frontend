@@ -19,6 +19,13 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Lista de categorias editada no painel (documento config/categorias).
+    // O site lê para montar as abas; só o administrador grava.
+    match /config/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /orders/{id} {
       allow read, update: if isAdmin();
       allow create, delete: if false;
