@@ -50,25 +50,23 @@
 
     header { background: #131315; }
 
+    /* Logo grande: o PNG (1024 px) já traz o emblema com "POWER LAB SUPLEMENTOS".
+       Recorte só da faixa do emblema; o fundo preto some no gradiente com lighten. */
+    .banner-logo { position: relative; margin: 0; line-height: 0; }
     .logo-img {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
+      display: block;
+      width: 340px;
+      max-width: 82vw;
+      height: auto;
+      aspect-ratio: 1024 / 700;
       object-fit: cover;
-      border: 3px solid var(--vermelho);
-      box-shadow: 0 0 20px #e8000d66;
-    }
-
-    .banner-logo-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 18px;
+      object-position: 50% 41%;
+      mix-blend-mode: lighten;
     }
 
     .banner-section {
       width: 100%;
-      height: 170px;
+      padding: 18px 16px 26px;
       background:
         linear-gradient(135deg, #131315 0%, #1e0406 35%, #3a0208 60%, #1e0406 80%, #131315 100%);
       display: flex;
@@ -102,33 +100,23 @@
     }
 
     .banner-tag,
-    .banner-titulo,
-    .banner-sub { position: relative; }
+    .banner-sub,
+    .banner-ctas { position: relative; }
 
     .banner-tag {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.85em;
+      font-size: 0.95em;
       font-weight: 700;
-      color: var(--vermelho);
-      letter-spacing: 6px;
+      color: var(--branco);
+      letter-spacing: 2.5px;
       text-transform: uppercase;
       border: 1.5px solid var(--vermelho);
-      padding: 4px 16px;
+      background: rgba(232, 0, 13, 0.12);
+      padding: 5px 16px;
       border-radius: 2px;
+      max-width: calc(100vw - 32px);
+      text-align: center;
     }
-
-    .banner-titulo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 3.2em;
-      font-weight: 900;
-      color: var(--branco);
-      text-transform: uppercase;
-      letter-spacing: 5px;
-      text-shadow: 0 0 40px #e8000d66, 0 4px 8px #00000088;
-      line-height: 1;
-    }
-
-    .banner-titulo span { color: var(--vermelho); }
 
     .banner-sub {
       font-size: 0.85em;
@@ -138,23 +126,75 @@
       font-weight: 600;
     }
 
+    .banner-ctas {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 24px;
+      border-radius: 4px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1em;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+
+    .cta-primario {
+      background: var(--vermelho);
+      color: var(--branco);
+      border: 1.5px solid var(--vermelho);
+      box-shadow: 0 6px 18px rgba(232, 0, 13, 0.35);
+    }
+
+    .cta-primario:hover { background: var(--vermelho-escuro); border-color: var(--vermelho-escuro); }
+
+    .cta-outline {
+      background: rgba(0, 0, 0, 0.25);
+      color: var(--branco);
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+    }
+
+    .cta-outline:hover { border-color: var(--vermelho); background: rgba(232, 0, 13, 0.12); }
+    .cta .fa-whatsapp { font-size: 1.2em; color: #25d366; }
+
     .pickup-bar {
       background: #1a0507;
       color: var(--branco);
-      text-align: center;
       padding: 9px 16px;
       border-bottom: 1px solid #3a1014;
       font-size: 0.82em;
     }
 
-    .pickup-bar strong {
-      color: var(--amarelo);
-      font-family: 'Barlow Condensed', sans-serif;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      font-size: 1.15em;
-      font-weight: 800;
-      margin-right: 8px;
+    .pickup-bar ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px 0;
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+
+    .pickup-bar li { white-space: nowrap; }
+    .pickup-copia { display: none !important; }
+    .pickup-bar li + li::before { content: '•'; color: var(--vermelho); margin: 0 10px; }
+    .pickup-bar li:first-child { color: var(--amarelo); font-weight: 700; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
     }
 
     .nav-wrapper {
@@ -1050,24 +1090,38 @@
     }
 
     @media (max-width: 900px) {
-      .logo-img { width: 48px; height: 48px; }
-      .banner-titulo { font-size: 2.4em; }
-      .banner-section { height: 130px; }
+      .logo-img { width: 290px; }
+      .banner-section { padding: 14px 16px 22px; }
     }
 
     @media (max-width: 600px) {
-      .logo-img { width: 38px; height: 38px; }
-      .banner-logo-row { gap: 8px; }
-      .banner-section { height: 96px; gap: 5px; }
-      .banner-tag { font-size: 0.6em; letter-spacing: 3px; padding: 3px 10px; }
-      .banner-titulo { font-size: 1.7em; letter-spacing: 3px; }
+      .logo-img { width: 212px; }
+      .banner-section { padding: 10px 12px 16px; gap: 5px; }
+      .banner-tag { font-size: 0.72em; letter-spacing: 1.5px; padding: 3px 10px; }
       .banner-sub { font-size: 0.62em; letter-spacing: 2px; }
-      .pickup-bar { font-size: 0.75em; }
+      .banner-ctas { gap: 8px; margin-top: 4px; flex-wrap: nowrap; width: 100%; max-width: 360px; }
+      .cta { flex: 1 1 0; min-height: 42px; padding: 0 10px; font-size: 0.98em; letter-spacing: 1px; }
+      .pickup-bar { font-size: 0.72em; }
       nav button { font-size: 0.92em; padding: 8px 14px; }
       main { padding: 24px 12px 44px; }
       .prod-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 20px 14px; }
-      .pickup-bar { padding: 12px 16px; line-height: 1.5; }
-      .pickup-bar strong { display: block; margin: 0 0 2px; }
+      .pickup-bar { padding: 7px 10px; line-height: 1.4; }
+      .pickup-bar li + li::before { margin: 0 6px; }
+      .cta { white-space: nowrap; letter-spacing: 0.5px; font-size: 0.95em; padding: 0 8px; }
+      .cta .fa-whatsapp { font-size: 1.1em; }
+    }
+
+    /* Celular: faixa em uma linha, rolando devagar (parada se o sistema pedir menos movimento). */
+    @media (max-width: 600px) and (prefers-reduced-motion: no-preference) {
+      .pickup-bar { padding: 7px 0; overflow: hidden; }
+      .pickup-track { display: flex; width: max-content; animation: faixa-topo 24s linear infinite; }
+      .pickup-bar ul { flex-wrap: nowrap; margin: 0; max-width: none; }
+      .pickup-copia { display: flex !important; }
+      .pickup-bar li::before,
+      .pickup-bar li + li::before { content: '•'; color: var(--vermelho); margin: 0 10px; }
+      .pickup-bar:hover .pickup-track { animation-play-state: paused; }
+    }
+    @keyframes faixa-topo { from { transform: translateX(0); } to { transform: translateX(-50%); }
       nav { padding: 10px 12px; }
       .section-header { margin-bottom: 22px; padding-bottom: 12px; }
       footer { padding: 40px 18px 116px; margin-top: 28px; }
@@ -1086,18 +1140,31 @@
 <body>
   <header>
     <div class="banner-section">
-      <div class="banner-tag">Performance & Resultados</div>
-      <div class="banner-logo-row">
-        <img src="logo-powerlab.png" class="logo-img" alt="Power Lab">
-        <div class="banner-titulo">Power <span>Lab</span></div>
-      </div>
+      <div class="banner-tag" id="topo-oferta">Retirada grátis • Entrega em Juazeiro</div>
+      <h1 class="banner-logo">
+        <img src="logo-powerlab.png" class="logo-img" alt="Power Lab Suplementos" width="1024" height="700" fetchpriority="high">
+      </h1>
       <div class="banner-sub">Sua Evolução Começa Aqui</div>
+      <div class="banner-ctas">
+        <a href="#catalogo" class="cta cta-primario" id="cta-produtos">Ver produtos</a>
+        <a href="https://wa.me/5574999138625" class="cta cta-outline" id="cta-whatsapp" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Pedir no WhatsApp</a>
+      </div>
     </div>
     <div class="pickup-bar">
-      <strong>Juazeiro-BA, João Paulo II</strong>
-      <span>Retirada gratuita no João Paulo II</span>
+      <div class="pickup-track">
+        <ul>
+          <li>Retirada grátis no João Paulo II</li>
+          <li>Entrega em Juazeiro</li>
+          <li>Pix ou cartão</li>
+        </ul>
+        <ul class="pickup-copia" aria-hidden="true">
+          <li>Retirada grátis no João Paulo II</li>
+          <li>Entrega em Juazeiro</li>
+          <li>Pix ou cartão</li>
+        </ul>
+      </div>
     </div>
-    <div class="nav-wrapper">
+    <div class="nav-wrapper" id="catalogo">
       <nav id="menu-nav" aria-label="Categorias">
         <button type="button" data-category="proteinas" hidden>Proteínas</button>
         <button type="button" data-category="pretreinos" hidden>Pré-treinos</button>
@@ -1525,9 +1592,13 @@
       return message;
     }
 
-    function bindTrackedWhatsapp(anchor, source) {
+    function bindTrackedWhatsapp(anchor, source, text) {
       if (!anchor) return;
-      const apply = () => { anchor.href = whatsappUrl(contactMessage()); };
+      const apply = () => {
+        let message = text || contactMessage();
+        if (text && currentUtm()) message += '\nOrigem: ' + currentUtm();
+        anchor.href = whatsappUrl(message);
+      };
       apply();
       anchor.addEventListener('click', () => {
         apply();
@@ -1569,7 +1640,22 @@
         social.appendChild(instagram);
       }
       bindTrackedWhatsapp(document.getElementById('whatsapp-float'), 'float');
+      bindTrackedWhatsapp(document.getElementById('cta-whatsapp'), 'topo', 'Olá! Vim pelo site da Power Lab Suplementos e quero fazer um pedido.');
     }
+
+    // Frase do topo: editável no painel (Firestore config/topo, campo "oferta").
+    const TOPO_OFERTA_PADRAO = 'Retirada grátis • Entrega em Juazeiro';
+    function applyTopoOferta(raw) {
+      const text = String(raw ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
+      document.getElementById('topo-oferta').textContent = text || TOPO_OFERTA_PADRAO;
+    }
+
+    document.getElementById('cta-produtos').addEventListener('click', (event) => {
+      event.preventDefault();
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      document.getElementById('catalogo').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      track('cta_ver_produtos', { source: 'topo' });
+    });
 
     function showToast(text) {
       const toast = document.getElementById('toast');
@@ -2758,10 +2844,12 @@
         const existing = getApps().find((app) => app.name === 'loja');
         const app = existing || initializeApp(firebaseConfig, 'loja');
         const db = getFirestore(app);
-        const [snap, configSnap] = await Promise.all([
+        const [snap, configSnap, topoSnap] = await Promise.all([
           getDocs(collection(db, 'produtos')),
           getDoc(doc(db, 'config', 'categorias')).catch(() => null),
+          getDoc(doc(db, 'config', 'topo')).catch(() => null),
         ]);
+        if (topoSnap && topoSnap.exists()) applyTopoOferta((topoSnap.data() || {}).oferta);
         const savedCategorias = configSnap && configSnap.exists() ? sanitizeCategorias((configSnap.data() || {}).lista) : null;
         if (savedCategorias) categoriasLista = savedCategorias;
         produtos = snap.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
