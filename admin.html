@@ -1148,9 +1148,10 @@
             <h3 style="margin-bottom:6px;">Frase do topo da loja</h3>
             <p class="hint" style="margin-bottom:10px;">
               Aparece no selo acima da logo. Use algo verdadeiro e curto (até 80 caracteres).
-              Em branco, volta para a frase padrão: <strong>Retirada grátis • Entrega em Juazeiro</strong>.
+              Em branco, o selo some da loja (não deixa caixa vazia).
+              Se quiser de novo a frase <strong>Retirada grátis • Entrega em Juazeiro</strong>, use o botão abaixo.
             </p>
-            <input type="text" id="topo-oferta" class="form-input" maxlength="80" style="max-width:520px;margin-bottom:10px;" placeholder="Retirada grátis • Entrega em Juazeiro">
+            <input type="text" id="topo-oferta" class="form-input" maxlength="80" style="max-width:520px;margin-bottom:10px;" placeholder="Deixe em branco para ocultar o selo">
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button type="button" class="btn-salvar" id="btn-salvar-topo">Salvar frase</button>
               <button type="button" class="btn-cancelar" id="btn-padrao-topo">Usar a padrão</button>
@@ -1516,26 +1517,27 @@
       try {
         const snap = await getDoc(doc(db, 'config', 'topo'));
         const oferta = snap.exists() ? limparOferta((snap.data() || {}).oferta) : '';
-        input.value = oferta || TOPO_OFERTA_PADRAO;
-        estado.textContent = oferta ? '' : 'Usando a frase padrão.';
+        input.value = oferta;
+        estado.textContent = oferta ? '' : 'Selo oculto na loja (frase em branco).';
       } catch (e) {
-        console.warn('Frase do topo: usando a padrão.', e);
-        input.value = TOPO_OFERTA_PADRAO;
+        console.warn('Frase do topo: não foi possível carregar.', e);
+        input.value = '';
+        estado.textContent = 'Não foi possível carregar a frase.';
       }
     }
 
     async function salvarTopo(valor) {
       const estado = document.getElementById('topo-estado');
       const oferta = limparOferta(valor);
-      document.getElementById('topo-oferta').value = oferta || TOPO_OFERTA_PADRAO;
+      document.getElementById('topo-oferta').value = oferta;
       if (DEMO) {
         estado.textContent = 'Demonstração: frase não foi gravada.';
         return;
       }
       try {
         await setDoc(doc(db, 'config', 'topo'), { oferta, updatedAt: serverTimestamp() });
-        estado.textContent = oferta ? 'Frase salva. Já aparece na loja.' : 'Voltou para a frase padrão.';
-        showToast('Frase do topo salva.', 'success');
+        estado.textContent = oferta ? 'Frase salva. Já aparece na loja.' : 'Selo oculto na loja.';
+        showToast(oferta ? 'Frase do topo salva.' : 'Selo do topo oculto.', 'success');
       } catch (e) {
         console.error(e);
         estado.textContent = 'Não foi possível salvar (permissão do Firestore).';
@@ -1544,7 +1546,7 @@
     }
 
     document.getElementById('btn-salvar-topo').addEventListener('click', () => salvarTopo(document.getElementById('topo-oferta').value));
-    document.getElementById('btn-padrao-topo').addEventListener('click', () => salvarTopo(''));
+    document.getElementById('btn-padrao-topo').addEventListener('click', () => salvarTopo(TOPO_OFERTA_PADRAO));
 
     async function salvarCategorias() {
       const estado = document.getElementById('categorias-estado');
@@ -1870,10 +1872,10 @@
 
     function escapeHtml(value) {
       return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>')
+        .replace(/"/g, '"')
         .replace(/'/g, '&#39;');
     }
 
