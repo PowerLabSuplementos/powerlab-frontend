@@ -1144,6 +1144,19 @@
             </div>
             <p id="token-estado" class="form-label" style="margin-top:12px;"></p>
           </div>
+          <div class="settings-card" id="card-topo">
+            <h3 style="margin-bottom:6px;">Frase do topo da loja</h3>
+            <p class="hint" style="margin-bottom:10px;">
+              Aparece no selo acima da logo. Use algo verdadeiro e curto (até 80 caracteres).
+              Em branco, volta para a frase padrão: <strong>Retirada grátis • Entrega em Juazeiro</strong>.
+            </p>
+            <input type="text" id="topo-oferta" class="form-input" maxlength="80" style="max-width:520px;margin-bottom:10px;" placeholder="Retirada grátis • Entrega em Juazeiro">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-salvar" id="btn-salvar-topo">Salvar frase</button>
+              <button type="button" class="btn-cancelar" id="btn-padrao-topo">Usar a padrão</button>
+            </div>
+            <p id="topo-estado" class="hint" style="margin-top:10px;"></p>
+          </div>
           <div class="settings-card" id="card-categorias">
             <h3 style="margin-bottom:6px;">Categorias da loja</h3>
             <p class="hint" style="margin-bottom:10px;">
@@ -1490,6 +1503,48 @@
         }
       });
     }
+
+    const TOPO_OFERTA_PADRAO = 'Retirada grátis • Entrega em Juazeiro';
+    function limparOferta(valor) {
+      return String(valor ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    }
+
+    async function carregarTopo() {
+      const input = document.getElementById('topo-oferta');
+      const estado = document.getElementById('topo-estado');
+      if (DEMO) { input.value = TOPO_OFERTA_PADRAO; return; }
+      try {
+        const snap = await getDoc(doc(db, 'config', 'topo'));
+        const oferta = snap.exists() ? limparOferta((snap.data() || {}).oferta) : '';
+        input.value = oferta || TOPO_OFERTA_PADRAO;
+        estado.textContent = oferta ? '' : 'Usando a frase padrão.';
+      } catch (e) {
+        console.warn('Frase do topo: usando a padrão.', e);
+        input.value = TOPO_OFERTA_PADRAO;
+      }
+    }
+
+    async function salvarTopo(valor) {
+      const estado = document.getElementById('topo-estado');
+      const oferta = limparOferta(valor);
+      document.getElementById('topo-oferta').value = oferta || TOPO_OFERTA_PADRAO;
+      if (DEMO) {
+        estado.textContent = 'Demonstração: frase não foi gravada.';
+        return;
+      }
+      try {
+        await setDoc(doc(db, 'config', 'topo'), { oferta, updatedAt: serverTimestamp() });
+        estado.textContent = oferta ? 'Frase salva. Já aparece na loja.' : 'Voltou para a frase padrão.';
+        showToast('Frase do topo salva.', 'success');
+      } catch (e) {
+        console.error(e);
+        estado.textContent = 'Não foi possível salvar (permissão do Firestore).';
+        showToast('Erro ao salvar a frase do topo.', 'error');
+      }
+    }
+
+    document.getElementById('btn-salvar-topo').addEventListener('click', () => salvarTopo(document.getElementById('topo-oferta').value));
+    document.getElementById('btn-padrao-topo').addEventListener('click', () => salvarTopo(''));
 
     async function salvarCategorias() {
       const estado = document.getElementById('categorias-estado');
@@ -1997,6 +2052,7 @@
       try {
         await carregarProdutos();
         await carregarCategorias();
+        await carregarTopo();
         await carregarPedidos();
         renderPainel();
         renderizarTabela();
@@ -2340,6 +2396,7 @@
       renderPainel();
       renderizarTabela();
       renderCategorias();
+      carregarTopo();
     }
 
     function pedidoDemo(id, dias, status, nome, telefone, entrega, taxa, km, items) {
