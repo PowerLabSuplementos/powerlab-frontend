@@ -1139,7 +1139,7 @@
 <body>
   <header>
     <div class="banner-section">
-      <div class="banner-tag" id="topo-oferta">Retirada grátis • Entrega em Juazeiro</div>
+      <div class="banner-tag" id="topo-oferta" hidden></div>
       <h1 class="banner-logo">
         <picture>
           <!-- Logo do topo: emblema recortado, só o fundo externo transparente, 720x487 (2x do tamanho exibido). Embutido para não depender de upload binário. -->
@@ -1157,12 +1157,12 @@
       <div class="pickup-track">
         <ul>
           <li>Retirada grátis no João Paulo II</li>
-          <li>Entrega em Juazeiro</li>
+          <li>Entrega em Juazeiro e Petrolina</li>
           <li>Pix ou cartão</li>
         </ul>
         <ul class="pickup-copia" aria-hidden="true">
           <li>Retirada grátis no João Paulo II</li>
-          <li>Entrega em Juazeiro</li>
+          <li>Entrega em Juazeiro e Petrolina</li>
           <li>Pix ou cartão</li>
         </ul>
       </div>
@@ -1647,10 +1647,18 @@
     }
 
     // Frase do topo: editável no painel (Firestore config/topo, campo "oferta").
+    // Em branco, o selo some (sem caixa vermelha vazia). A frase padrão só aparece se for gravada.
     const TOPO_OFERTA_PADRAO = 'Retirada grátis • Entrega em Juazeiro';
     function applyTopoOferta(raw) {
       const text = String(raw ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
-      document.getElementById('topo-oferta').textContent = text || TOPO_OFERTA_PADRAO;
+      const el = document.getElementById('topo-oferta');
+      if (!text) {
+        el.textContent = '';
+        el.hidden = true;
+        return;
+      }
+      el.textContent = text;
+      el.hidden = false;
     }
 
     document.getElementById('cta-produtos').addEventListener('click', (event) => {
