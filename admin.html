@@ -837,6 +837,19 @@
       width: 22px; height: 22px; border-radius: 4px;
     }
     .var-chip button:hover { background: var(--vermelho); color: #fff; }
+    .var-preco-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.82em; font-weight: 700; color: #ddd; cursor: pointer; }
+    .var-preco-toggle input { width: 16px; height: 16px; accent-color: var(--vermelho); }
+    .var-preco-toggle.off { color: #777; cursor: not-allowed; }
+    .var-precos { display: flex; flex-direction: column; gap: 6px; }
+    .var-preco-head, .var-preco-row { display: grid; grid-template-columns: minmax(64px, 1fr) minmax(72px, 120px) minmax(60px, 96px) 28px; gap: 8px; align-items: center; }
+    .var-preco-head { font-size: 0.72em; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+    .var-preco-row .var-valor { font-weight: 700; font-size: 0.88em; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .var-preco-row .form-input { padding: 8px 10px; min-width: 0; }
+    .var-preco-row button {
+      background: none; border: none; color: #ccc; cursor: pointer; font-size: 1.15em; width: 28px; height: 28px; border-radius: 4px;
+    }
+    .var-preco-row button:hover { background: var(--vermelho); color: #fff; }
+    .estoque-auto { color: var(--amarelo); font-size: 0.75em; font-weight: 700; margin-top: 4px; }
     .var-add { display: flex; gap: 8px; }
     .var-add .form-input { flex: 1; min-width: 0; }
     .btn-mini {
@@ -1209,14 +1222,18 @@
               <div class="form-group">
                 <label class="form-label">Quantidade em Estoque *</label>
                 <input type="number" id="prod-estoque" class="form-input" placeholder="Ex: 50" min="0">
+                <div class="estoque-auto" id="estoque-auto" hidden></div>
               </div>
 
               <div class="form-group full">
                 <label class="form-label">Sabores / opções</label>
                 <p class="hint">
-                  Um produto só, com botões de sabor no site. O preço é o mesmo para todas as opções e o
-                  estoque acima vale para o produto inteiro (soma de todos os sabores). Deixe vazio se o
-                  produto não tem sabor.
+                  Um produto só, com botões de opção no site. Sabores têm sempre o mesmo preço e usam o
+                  estoque acima (soma de todos os sabores). Para peso ou tamanho com preço diferente
+                  (ex.: 150 g e 300 g), adicione um tipo de opção e marque <strong>Preço diferente por opção</strong>:
+                  dá para pôr preço e estoque em cada uma. Preço em branco = preço do produto; estoque em branco
+                  em todas = usa o estoque acima. Só um tipo de opção por produto pode ter preço próprio.
+                  Deixe vazio se o produto não tem opções.
                 </p>
                 <div id="variacoes-box" style="display:flex;flex-direction:column;gap:10px;"></div>
                 <div>
@@ -1590,45 +1607,123 @@
     });
 
     // ===== SABORES / OPÇÕES =====
-    let formVariacoes = [{ nome: 'Sabor', opcoes: [] }];
+    // Cada grupo: { nome, opcoes: [], comPreco, precos: [], estoques: [] }.
+    // precos/estoques ficam alinhados com opcoes ('' = usa o do produto).
+    // Só um grupo por produto pode ter preço por opção; Sabor nunca tem.
+    let formVariacoes = [{ nome: 'Sabor', opcoes: [], comPreco: false, precos: [], estoques: [] }];
+
+    function grupoVazio(nome) {
+      return { nome, opcoes: [], comPreco: false, precos: [], estoques: [] };
+    }
+
+    function ehSabor(nome) {
+      return String(nome || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'sabor';
+    }
+
+    function precoOpcao(valor) {
+      if (valor == null || valor === '') return null;
+      const n = typeof valor === 'number' ? valor : Number(String(valor).trim().replace(/\s/g, '').replace(',', '.'));
+      return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
+    }
+
+    function estoqueOpcao(valor) {
+      if (valor == null || valor === '') return null;
+      const n = typeof valor === 'number' ? valor : Number(String(valor).trim().replace(',', '.'));
+      return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
+    }
 
     function variacoesDoProduto(p) {
       const grupos = [];
       const vistos = new Set();
-      const add = (nome, opcoes) => {
+      let temPreco = false;
+      const add = (nome, opcoes, extra) => {
         const n = String(nome || '').trim();
         if (!n || vistos.has(n.toLowerCase()) || !Array.isArray(opcoes)) return;
         const lista = [];
-        opcoes.forEach((o) => {
+        const precos = [];
+        const estoques = [];
+        opcoes.forEach((o, i) => {
           const v = String(o ?? '').trim().replace(/\s+/g, ' ');
-          if (v && !lista.some((x) => x.toLowerCase() === v.toLowerCase())) lista.push(v);
+          if (!v || lista.some((x) => x.toLowerCase() === v.toLowerCase())) return;
+          lista.push(v);
+          const pr = extra && Array.isArray(extra.precos) ? precoOpcao(extra.precos[i]) : null;
+          const es = extra && Array.isArray(extra.estoques) ? estoqueOpcao(extra.estoques[i]) : null;
+          precos.push(pr == null ? '' : String(pr).replace('.', ','));
+          estoques.push(es == null ? '' : String(es));
         });
         if (!lista.length) return;
         vistos.add(n.toLowerCase());
-        grupos.push({ nome: n, opcoes: lista });
+        const comPreco = Boolean(extra) && !temPreco && (precos.some(Boolean) || estoques.some((x) => x !== ''));
+        if (comPreco) temPreco = true;
+        grupos.push({ nome: n, opcoes: lista, comPreco, precos: comPreco ? precos : lista.map(() => ''), estoques: comPreco ? estoques : lista.map(() => '') });
       };
-      if (p && Array.isArray(p.variacoes)) p.variacoes.forEach((g) => g && add(g.nome, g.opcoes));
-      if (p && Array.isArray(p.sabores)) add('Sabor', p.sabores);
+      if (p && Array.isArray(p.variacoes)) p.variacoes.forEach((g) => g && add(g.nome, g.opcoes, g));
+      if (p && Array.isArray(p.sabores)) add('Sabor', p.sabores, null);
       return grupos;
+    }
+
+    function grupoComPreco() {
+      return formVariacoes.find((g) => g.comPreco && g.opcoes.length && !ehSabor(g.nome)) || null;
+    }
+
+    // Se todas as opções do grupo com preço têm estoque, o estoque do produto é a soma.
+    function syncEstoqueAuto() {
+      const input = document.getElementById('prod-estoque');
+      const note = document.getElementById('estoque-auto');
+      const g = grupoComPreco();
+      const valores = g ? g.estoques.map(estoqueOpcao) : [];
+      const todos = g && valores.length && valores.every((x) => x != null);
+      if (todos) {
+        const soma = valores.reduce((a, b) => a + b, 0);
+        input.value = soma;
+        input.disabled = true;
+        note.textContent = 'Soma do estoque de cada ' + g.nome.toLowerCase() + ': ' + soma;
+        note.hidden = false;
+      } else {
+        input.disabled = false;
+        note.hidden = true;
+      }
     }
 
     function renderVariacoes() {
       const box = document.getElementById('variacoes-box');
-      box.innerHTML = formVariacoes.map((grupo, gi) => '<div class="var-group">'
-        + '<div class="var-head">'
-        + '<input type="text" class="form-input" data-var-nome="' + gi + '" maxlength="40" value="' + escapeHtml(grupo.nome) + '" aria-label="Tipo de opção">'
-        + (gi > 0 ? '<button type="button" class="btn-mini danger" data-var-del-grupo="' + gi + '">Remover tipo</button>' : '')
-        + '</div>'
-        + '<div class="var-chips">' + (grupo.opcoes.length
-          ? grupo.opcoes.map((opcao, oi) => '<span class="var-chip">' + escapeHtml(opcao)
-            + '<button type="button" data-var-del="' + gi + ':' + oi + '" aria-label="Remover ' + escapeHtml(opcao) + '">&times;</button></span>').join('')
-          : '<span class="hint">Nenhuma opção ainda.</span>')
-        + '</div>'
-        + '<div class="var-add">'
-        + '<input type="text" class="form-input" data-var-input="' + gi + '" maxlength="200" placeholder="' + (gi === 0 ? 'Ex.: Chocolate, Baunilha, Morango' : 'Ex.: 900 g, 1,8 kg') + '">'
-        + '<button type="button" class="btn-mini" data-var-add="' + gi + '">+ Adicionar</button>'
-        + '</div>'
-        + '</div>').join('');
+      const baseTxt = document.getElementById('prod-preco').value;
+      box.innerHTML = formVariacoes.map((grupo, gi) => {
+        const sabor = ehSabor(grupo.nome);
+        const comPreco = grupo.comPreco && !sabor;
+        const toggle = '<label class="var-preco-toggle' + (sabor ? ' off' : '') + '"' + (sabor ? ' title="Sabores têm sempre o mesmo preço"' : '') + '>'
+          + '<input type="checkbox" data-var-preco="' + gi + '"' + (comPreco ? ' checked' : '') + (sabor ? ' disabled' : '') + '> Preço diferente por opção'
+          + (sabor ? ' <span class="hint">(sabor tem o mesmo preço)</span>' : '') + '</label>';
+        const lista = comPreco
+          ? (grupo.opcoes.length
+            ? '<div class="var-precos"><div class="var-preco-head"><span>' + escapeHtml(grupo.nome || 'Opção') + '</span><span>Preço (R$)</span><span>Estoque</span><span></span></div>'
+              + grupo.opcoes.map((opcao, oi) => '<div class="var-preco-row">'
+                + '<span class="var-valor" title="' + escapeHtml(opcao) + '">' + escapeHtml(opcao) + '</span>'
+                + '<input type="text" inputmode="decimal" class="form-input" data-var-pr="' + gi + ':' + oi + '" value="' + escapeHtml(grupo.precos[oi] || '') + '" placeholder="' + escapeHtml(baseTxt || 'base') + '" aria-label="Preço de ' + escapeHtml(opcao) + '">'
+                + '<input type="number" min="0" class="form-input" data-var-es="' + gi + ':' + oi + '" value="' + escapeHtml(grupo.estoques[oi] || '') + '" placeholder="geral" aria-label="Estoque de ' + escapeHtml(opcao) + '">'
+                + '<button type="button" data-var-del="' + gi + ':' + oi + '" aria-label="Remover ' + escapeHtml(opcao) + '">&times;</button>'
+                + '</div>').join('')
+              + '</div>'
+            : '<span class="hint">Nenhuma opção ainda.</span>')
+          : '<div class="var-chips">' + (grupo.opcoes.length
+            ? grupo.opcoes.map((opcao, oi) => '<span class="var-chip">' + escapeHtml(opcao)
+              + '<button type="button" data-var-del="' + gi + ':' + oi + '" aria-label="Remover ' + escapeHtml(opcao) + '">&times;</button></span>').join('')
+            : '<span class="hint">Nenhuma opção ainda.</span>')
+          + '</div>';
+        return '<div class="var-group">'
+          + '<div class="var-head">'
+          + '<input type="text" class="form-input" data-var-nome="' + gi + '" maxlength="40" value="' + escapeHtml(grupo.nome) + '" aria-label="Tipo de opção">'
+          + (gi > 0 ? '<button type="button" class="btn-mini danger" data-var-del-grupo="' + gi + '">Remover tipo</button>' : '')
+          + '</div>'
+          + toggle
+          + lista
+          + '<div class="var-add">'
+          + '<input type="text" class="form-input" data-var-input="' + gi + '" maxlength="200" placeholder="' + (sabor ? 'Ex.: Chocolate, Baunilha, Morango' : 'Ex.: 150 g, 300 g') + '">'
+          + '<button type="button" class="btn-mini" data-var-add="' + gi + '">+ Adicionar</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+      syncEstoqueAuto();
     }
 
     function adicionarOpcoes(gi) {
@@ -1636,9 +1731,13 @@
       const grupo = formVariacoes[gi];
       if (!input || !grupo) return;
       // Aceita várias de uma vez separadas por vírgula ou ponto e vírgula.
-      input.value.split(/[;,\n]/).forEach((raw) => {
+      input.value.split(/[;\n]|(?<!\d),|,(?!\d)/).forEach((raw) => {
         const v = raw.trim().replace(/\s+/g, ' ').slice(0, 60);
-        if (v && !grupo.opcoes.some((x) => x.toLowerCase() === v.toLowerCase())) grupo.opcoes.push(v);
+        if (v && !grupo.opcoes.some((x) => x.toLowerCase() === v.toLowerCase())) {
+          grupo.opcoes.push(v);
+          grupo.precos.push('');
+          grupo.estoques.push('');
+        }
       });
       renderVariacoes();
       const again = document.querySelector('[data-var-input="' + gi + '"]');
@@ -1653,11 +1752,25 @@
       else if (del) {
         const [gi, oi] = del.dataset.varDel.split(':').map(Number);
         formVariacoes[gi].opcoes.splice(oi, 1);
+        formVariacoes[gi].precos.splice(oi, 1);
+        formVariacoes[gi].estoques.splice(oi, 1);
         renderVariacoes();
       } else if (delGrupo) {
         formVariacoes.splice(Number(delGrupo.dataset.varDelGrupo), 1);
         renderVariacoes();
       }
+    });
+    document.getElementById('variacoes-box').addEventListener('change', (event) => {
+      const toggle = event.target.closest('[data-var-preco]');
+      if (!toggle) return;
+      const gi = Number(toggle.dataset.varPreco);
+      const outro = formVariacoes.findIndex((g, i) => i !== gi && g.comPreco);
+      if (toggle.checked && outro >= 0) {
+        formVariacoes[outro].comPreco = false;
+        showToast('Só um tipo de opção pode ter preço próprio. Desmarquei "' + formVariacoes[outro].nome + '".', 'success');
+      }
+      formVariacoes[gi].comPreco = toggle.checked;
+      renderVariacoes();
     });
     document.getElementById('variacoes-box').addEventListener('keydown', (event) => {
       const input = event.target.closest('[data-var-input]');
@@ -1668,10 +1781,33 @@
     });
     document.getElementById('variacoes-box').addEventListener('input', (event) => {
       const nome = event.target.closest('[data-var-nome]');
+      const pr = event.target.closest('[data-var-pr]');
+      const es = event.target.closest('[data-var-es]');
       if (nome) formVariacoes[Number(nome.dataset.varNome)].nome = nome.value;
+      if (pr) {
+        const [gi, oi] = pr.dataset.varPr.split(':').map(Number);
+        formVariacoes[gi].precos[oi] = pr.value;
+      }
+      if (es) {
+        const [gi, oi] = es.dataset.varEs.split(':').map(Number);
+        formVariacoes[gi].estoques[oi] = es.value;
+        syncEstoqueAuto();
+      }
+    });
+    // Renomear para "Sabor" desliga o preço por opção.
+    document.getElementById('variacoes-box').addEventListener('focusout', (event) => {
+      const nome = event.target.closest('[data-var-nome]');
+      if (nome && ehSabor(nome.value) && formVariacoes[Number(nome.dataset.varNome)].comPreco) {
+        formVariacoes[Number(nome.dataset.varNome)].comPreco = false;
+        renderVariacoes();
+      }
+    });
+    document.getElementById('prod-preco').addEventListener('input', () => {
+      const base = document.getElementById('prod-preco').value;
+      document.querySelectorAll('[data-var-pr]').forEach((el) => { el.placeholder = base || 'base'; });
     });
     document.getElementById('btn-add-grupo').addEventListener('click', () => {
-      formVariacoes.push({ nome: formVariacoes.length ? 'Tamanho' : 'Sabor', opcoes: [] });
+      formVariacoes.push(grupoVazio(formVariacoes.length ? 'Peso' : 'Sabor'));
       renderVariacoes();
     });
     renderVariacoes();
@@ -2108,7 +2244,16 @@
         ? '<div class="empty-state"><strong>' + lows.length + ' produto(s) com estoque baixo ou esgotado</strong></div>'
         : '<div class="empty-state"><strong>Nenhum produto com estoque baixo</strong></div>';
       el.innerHTML = alert + '<div class="table-wrap"><div class="table-scroll"><table><thead><tr><th>Produto</th><th>Estoque</th><th>Ajuste</th></tr></thead><tbody>'
-        + todosProdutos.map((product) => '<tr><td>' + escapeHtml(product.nome) + '</td><td>' + badgeEstoque(product.estoque) + '</td><td><div class="stock-actions"><button type="button" data-stock="' + escapeHtml(product.id) + '" data-delta="-1">−</button><button type="button" data-stock="' + escapeHtml(product.id) + '" data-delta="1">+</button></div></td></tr>').join('')
+        + todosProdutos.map((product) => {
+          const porOpcao = estoquePorOpcao(product);
+          const detalhe = porOpcao
+            ? '<span class="td-variacoes">' + porOpcao.opcoes.map((o, i) => escapeHtml(o) + ': ' + escapeHtml(porOpcao.estoques[i] || '0')).join(' · ') + '</span>'
+            : '';
+          const ajuste = porOpcao
+            ? '<button type="button" class="btn-mini" onclick="editarProduto(\'' + escapeHtml(product.id) + '\')">Ajustar por ' + escapeHtml(porOpcao.nome.toLowerCase()) + '</button>'
+            : '<div class="stock-actions"><button type="button" data-stock="' + escapeHtml(product.id) + '" data-delta="-1">−</button><button type="button" data-stock="' + escapeHtml(product.id) + '" data-delta="1">+</button></div>';
+          return '<tr><td>' + escapeHtml(product.nome) + detalhe + '</td><td>' + badgeEstoque(product.estoque) + '</td><td>' + ajuste + '</td></tr>';
+        }).join('')
         + '</tbody></table></div></div>';
     }
 
@@ -2176,6 +2321,8 @@
         { id: 'profit', nome: 'Whey Profit 900g', preco: 124.9, estoque: 2, categoria: 'proteinas', descricao: '', imgurl: '' },
         { id: 'crea', nome: 'Creatina 300g', preco: 79.9, estoque: 0, categoria: 'pretreinos', descricao: '', imgurl: '' },
         { id: 'vita', nome: 'Vitamina D', preco: 39.9, estoque: 12, categoria: 'vitaminas', descricao: '', imgurl: '' },
+        { id: 'maxcrea', nome: 'Max Creatina', preco: 70, estoque: 10, categoria: 'pretreinos', descricao: '', imgurl: '', variacoes: [{ nome: 'Peso', opcoes: ['150g', '300g'], precos: [70, 120] }], sabores: [] },
+        { id: 'darkcrea', nome: 'Dark Creatina', preco: 90, estoque: 7, categoria: 'pretreinos', descricao: '', imgurl: '', variacoes: [{ nome: 'Peso', opcoes: ['300g', '500g'], precos: [89.9, 139.9], estoques: [5, 2] }], sabores: [] },
       ];
       todosPedidos = DEMO_VAZIO ? [] : [
         pedidoDemo('p1', 0, 'pago', 'Maria Souza', '74999998888', 'entrega', 7, 0.4, [{ id: 'whey', nome: 'Whey Protein', preco: 89.9, quantidade: 1, subtotal: 89.9 }]),
@@ -2246,7 +2393,7 @@
               <tr>
                 <td><img class="td-img" src="${p.imgurl || 'https://placehold.co/48x48/252528/e8000d?text=+'}" alt="${p.nome}"></td>
                 <td class="td-nome">${escapeHtml(p.nome)}${(() => { const g = variacoesDoProduto(p); return g.length ? '<span class="td-variacoes">' + g.map((x) => escapeHtml(x.nome) + ': ' + x.opcoes.length).join(' · ') + '</span>' : ''; })()}</td>
-                <td class="td-preco">R$ ${parseFloat(p.preco).toFixed(2).replace('.', ',')}</td>
+                <td class="td-preco">${precoTabela(p)}</td>
                 <td class="td-categoria">${escapeHtml(nomeCategoria(p))}</td>
                 <td>${badgeEstoque(p.estoque)}</td>
                 <td>
@@ -2264,6 +2411,22 @@
           </tbody>
         </table>
       `;
+    }
+
+    function precoTabela(p) {
+      const base = parseFloat(p.preco);
+      const fmt = (n) => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+      const g = variacoesDoProduto(p).find((x) => x.comPreco);
+      if (!g) return fmt(base);
+      const lista = g.opcoes.map((_, i) => precoOpcao(g.precos[i]) ?? base).filter((n) => n > 0);
+      const min = Math.min(...lista);
+      const max = Math.max(...lista);
+      return max > min ? fmt(min) + ' a ' + fmt(max) : fmt(min);
+    }
+
+    function estoquePorOpcao(p) {
+      const g = variacoesDoProduto(p).find((x) => x.comPreco && x.estoques.some((e) => e !== ''));
+      return g || null;
     }
 
     function badgeEstoque(qtd) {
@@ -2292,17 +2455,45 @@
       const categoria = categoriaSel === '__nova__' ? '' : categoriaSel;
       const categoriaObj = categorias.find((c) => c.id === categoria);
       const categoriaNome = categoriaObj ? categoriaObj.nome : categoria;
+      let erroOpcoes = '';
+      let precoJaUsado = false;
       const variacoes = formVariacoes
-        .map((g) => ({ nome: String(g.nome || '').trim().slice(0, 40), opcoes: g.opcoes.slice() }))
+        .map((g) => {
+          const grupo = { nome: String(g.nome || '').trim().slice(0, 40), opcoes: g.opcoes.slice() };
+          if (!g.comPreco || ehSabor(grupo.nome) || !grupo.opcoes.length) return grupo;
+          if (precoJaUsado) {
+            erroOpcoes = 'Só um tipo de opção pode ter preço próprio.';
+            return grupo;
+          }
+          precoJaUsado = true;
+          const precos = g.opcoes.map((_, i) => precoOpcao(g.precos[i]));
+          const estoques = g.opcoes.map((_, i) => estoqueOpcao(g.estoques[i]));
+          g.opcoes.forEach((opcao, i) => {
+            if (String(g.precos[i] || '').trim() && precos[i] == null) erroOpcoes = 'Preço inválido em ' + opcao + '.';
+            if (String(g.estoques[i] || '').trim() && estoques[i] == null) erroOpcoes = 'Estoque inválido em ' + opcao + '.';
+          });
+          const comEstoque = estoques.filter((x) => x != null).length;
+          if (comEstoque && comEstoque < estoques.length) {
+            erroOpcoes = 'Preencha o estoque de todas as opções de ' + grupo.nome + ' ou deixe todas em branco (usa o estoque geral).';
+          }
+          if (precos.some((x) => x != null)) grupo.precos = precos;
+          if (comEstoque) grupo.estoques = estoques;
+          return grupo;
+        })
         .filter((g) => g.nome && g.opcoes.length);
       const grupoSabor = variacoes.find((g) => g.nome.toLowerCase() === 'sabor');
       const sabores = grupoSabor ? grupoSabor.opcoes : [];
+      syncEstoqueAuto();
       const estoque  = parseInt(document.getElementById('prod-estoque').value);
       const descricao= document.getElementById('prod-descricao').value.trim();
       const arquivo  = document.getElementById('prod-imagem').files[0];
 
       if (!nome || isNaN(preco) || !categoria || isNaN(estoque)) {
         showToast('Preencha todos os campos obrigatórios!', 'error');
+        return;
+      }
+      if (erroOpcoes) {
+        showToast(erroOpcoes, 'error');
         return;
       }
 
@@ -2407,9 +2598,9 @@
       document.getElementById('prod-preco').value = p.preco;
       renderSelectCategorias(p.categoria || '');
       formVariacoes = variacoesDoProduto(p);
-      if (!formVariacoes.length) formVariacoes = [{ nome: 'Sabor', opcoes: [] }];
-      renderVariacoes();
+      if (!formVariacoes.length) formVariacoes = [grupoVazio('Sabor')];
       document.getElementById('prod-estoque').value = p.estoque;
+      renderVariacoes();
       document.getElementById('prod-descricao').value = p.descricao || '';
       document.getElementById('form-titulo').textContent = 'Editar';
 
@@ -2430,9 +2621,11 @@
       document.getElementById('prod-nome').value = '';
       document.getElementById('prod-preco').value = '';
       document.getElementById('prod-categoria').value = '';
-      formVariacoes = [{ nome: 'Sabor', opcoes: [] }];
+      formVariacoes = [grupoVazio('Sabor')];
       renderVariacoes();
       document.getElementById('prod-estoque').value = '';
+      document.getElementById('prod-estoque').disabled = false;
+      document.getElementById('estoque-auto').hidden = true;
       document.getElementById('prod-descricao').value = '';
       document.getElementById('prod-imagem').value = '';
       document.getElementById('form-titulo').textContent = 'Cadastrar';

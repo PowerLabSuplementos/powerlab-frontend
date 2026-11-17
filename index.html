@@ -395,6 +395,16 @@
     }
 
     .opt-chip:focus-visible { outline: 2px solid var(--amarelo); outline-offset: 2px; }
+    .opt-chip.out { opacity: .45; text-decoration: line-through; cursor: not-allowed; }
+    .prod-preco .preco-de {
+      display: block;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.42em;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: var(--cinza-texto);
+      text-transform: none;
+    }
     .sheet-body .opt-row { flex-wrap: wrap; overflow: visible; }
     .sheet-body .opt-group { margin: 10px 0 12px; }
     .sheet-body .opt-label { font-size: 0.9em; }
@@ -1602,25 +1612,32 @@
       return produtos.find((item) => item.id === id) || null;
     }
 
-    // O estoque é do produto: todos os sabores somam no mesmo número.
+    // O estoque é do produto (todos os sabores somam no mesmo número), exceto
+    // quando a opção com preço tem estoque próprio.
     function qtyInCart(id) {
       return cart.reduce((sum, item) => sum + (item.id === id ? item.qty : 0), 0);
     }
 
-    function remainingToAdd(id) {
+    function remainingToAdd(id, opts) {
       const product = productById(id);
       if (!product) return 0;
-      return Math.max(0, parseEstoque(product.estoque) - qtyInCart(id));
+      const group = pricedGroupOf(product);
+      if (group && pricedIndex(group, opts) >= 0) {
+        const pool = stockPool(product, opts);
+        return Math.max(0, pool.limit - qtyInPool(product, pool.key));
+      }
+      return Math.max(0, totalStock(product) - qtyInCart(id));
     }
 
     function cartLines() {
       return cart.map((entry) => {
         const product = productById(entry.id);
-        const stock = product ? parseEstoque(product.estoque) : 0;
-        const price = product ? parsePreco(product.preco) : 0;
         const opts = product ? normalizeOpts(product, entry.opcoes) : entry.opcoes;
         const optionsOk = !product || opts !== null;
-        const totalQty = qtyInCart(entry.id);
+        const pool = product ? stockPool(product, opts || {}) : null;
+        const stock = pool ? pool.limit : 0;
+        const price = product ? unitPrice(product, opts || {}) : 0;
+        const totalQty = pool ? qtyInPool(product, pool.key) : 0;
         return {
           key: cartKey(entry.id, entry.opcoes),
           id: entry.id,
@@ -1717,35 +1734,134 @@
       document.getElementById('titulo-categoria').textContent = categoriaAtiva ? categoryLabel(categoriaAtiva, true) : 'Produtos';
     }
 
-    // ===== Sabores / opções (mesmo preço) =====
+    // ===== Sabores / opções =====
+    // Um grupo por produto pode ter preço (e estoque) por opção: `precos` e
+    // `estoques` alinhados com `opcoes`; vazio = preço/estoque do produto.
+    // O servidor recalcula tudo no checkout; aqui é só para mostrar.
     function cleanOption(value, max) {
       return String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
+    }
+
+    function optionPrice(value) {
+      if (value == null || value === '') return null;
+      const price = parsePreco(value);
+      return price > 0 ? price : null;
+    }
+
+    function optionStock(value) {
+      if (value == null) return null;
+      if (typeof value === 'string' && !value.trim()) return null;
+      const numeric = typeof value === 'string' ? Number(value.trim().replace(',', '.')) : Number(value);
+      if (!Number.isFinite(numeric) || numeric < 0) return null;
+      return Math.floor(numeric);
     }
 
     function optionGroups(product) {
       if (!product) return [];
       const groups = [];
       const seenGroups = new Set();
-      const push = (nome, opcoes) => {
+      let pricedTaken = false;
+      const push = (nome, opcoes, extra) => {
         const groupName = cleanOption(nome, 40);
         if (!groupName || seenGroups.has(fold(groupName)) || !Array.isArray(opcoes)) return;
         const seen = new Set();
         const values = [];
-        opcoes.forEach((raw) => {
+        const precos = [];
+        const estoques = [];
+        opcoes.forEach((raw, index) => {
           const value = cleanOption(raw, 60);
-          if (!value || seen.has(value.toLowerCase())) return;
-          seen.add(value.toLowerCase());
+          if (!value || seen.has(fold(value))) return;
+          seen.add(fold(value));
           values.push(value);
+          if (extra) {
+            precos.push(Array.isArray(extra.precos) ? optionPrice(extra.precos[index]) : null);
+            estoques.push(Array.isArray(extra.estoques) ? optionStock(extra.estoques[index]) : null);
+          }
         });
         if (!values.length) return;
         seenGroups.add(fold(groupName));
-        groups.push({ nome: groupName, opcoes: values });
+        const group = { nome: groupName, opcoes: values };
+        if (extra && !pricedTaken && (precos.some((x) => x != null) || estoques.some((x) => x != null))) {
+          pricedTaken = true;
+          group.precos = precos;
+          group.estoques = estoques;
+        }
+        groups.push(group);
       };
       if (Array.isArray(product.variacoes)) {
-        product.variacoes.forEach((group) => { if (group && typeof group === 'object') push(group.nome, group.opcoes); });
+        product.variacoes.forEach((group) => {
+          if (group && typeof group === 'object') push(group.nome, group.opcoes, { precos: group.precos, estoques: group.estoques });
+        });
       }
-      if (Array.isArray(product.sabores)) push('Sabor', product.sabores);
+      if (Array.isArray(product.sabores)) push('Sabor', product.sabores, null);
       return groups;
+    }
+
+    function pricedGroupOf(product) {
+      return optionGroups(product).find((group) => group.precos) || null;
+    }
+
+    function pricedIndex(group, opts) {
+      if (!group || !opts) return -1;
+      const key = Object.keys(opts).find((k) => fold(k) === fold(group.nome));
+      if (key == null) return -1;
+      return group.opcoes.findIndex((option) => fold(option) === fold(opts[key]));
+    }
+
+    // Preço unitário da combinação escolhida (preço da opção ou o do produto).
+    function unitPrice(product, opts) {
+      if (!product) return 0;
+      const group = pricedGroupOf(product);
+      const index = pricedIndex(group, opts);
+      if (index >= 0 && group.precos[index] != null) return group.precos[index];
+      return parsePreco(product.preco);
+    }
+
+    function priceRange(product) {
+      const base = parsePreco(product && product.preco);
+      const group = pricedGroupOf(product);
+      if (!group) return { min: base, max: base };
+      const list = group.opcoes.map((_, i) => (group.precos[i] != null ? group.precos[i] : base)).filter((p) => p > 0);
+      if (!list.length) return { min: 0, max: 0 };
+      return { min: Math.min(...list), max: Math.max(...list) };
+    }
+
+    // Preço mostrado no card/modal: o da opção escolhida, ou "a partir de".
+    function priceHtml(product, opts) {
+      const group = pricedGroupOf(product);
+      if (group && pricedIndex(group, opts) >= 0) {
+        const price = unitPrice(product, opts);
+        return price > 0 ? escapeHtml(formatMoney(price)) : 'Preço indisponível';
+      }
+      const range = priceRange(product);
+      if (range.min <= 0) return 'Preço indisponível';
+      if (range.max > range.min) return '<span class="preco-de">a partir de</span>' + escapeHtml(formatMoney(range.min));
+      return escapeHtml(formatMoney(range.min));
+    }
+
+    // De onde sai o estoque da combinação: da opção (se tiver) ou do produto.
+    function stockPool(product, opts) {
+      const id = String(product.id);
+      const group = pricedGroupOf(product);
+      const index = pricedIndex(group, opts);
+      if (index >= 0 && group.estoques[index] != null) return { key: id + '#' + index, limit: group.estoques[index] };
+      return { key: id, limit: parseEstoque(product.estoque) };
+    }
+
+    // Estoque total para "Esgotado"/"Últimas unidades".
+    function totalStock(product) {
+      if (!product) return 0;
+      const group = pricedGroupOf(product);
+      const own = group ? group.estoques.filter((x) => x != null) : [];
+      const ownSum = own.reduce((sum, x) => sum + x, 0);
+      if (group && own.length === group.opcoes.length) return ownSum;
+      return parseEstoque(product.estoque) + ownSum;
+    }
+
+    function qtyInPool(product, poolKey) {
+      return cart.reduce((sum, item) => (
+        item.id === String(product.id) && stockPool(product, item.opcoes).key === poolKey ? sum + item.qty : sum
+      ), 0);
     }
 
     // Devolve as opções válidas para o produto, ou null se faltar alguma.
@@ -1789,15 +1905,17 @@
       const chosen = selectedOpts[id] || {};
       return optionGroups(product).map((group) => {
         const value = chosen[group.nome];
+        const out = (i) => group.estoques && group.estoques[i] === 0;
         const label = value
           ? '<strong>' + escapeHtml(value) + '</strong>'
           : '<span class="opt-hint">escolha uma opção</span>';
         return '<div class="opt-group" data-opt-product="' + escapeHtml(id) + '" data-group="' + escapeHtml(group.nome) + '">'
           + '<div class="opt-label">' + escapeHtml(group.nome) + ': ' + label + '</div>'
           + '<div class="opt-row" role="group" aria-label="' + escapeHtml(group.nome) + '">'
-          + group.opcoes.map((option) =>
-            '<button type="button" class="opt-chip' + (option === value ? ' active' : '') + '" data-opt="' + escapeHtml(id)
-            + '" data-group="' + escapeHtml(group.nome) + '" data-value="' + escapeHtml(option) + '" aria-pressed="' + (option === value) + '">'
+          + group.opcoes.map((option, i) =>
+            '<button type="button" class="opt-chip' + (option === value ? ' active' : '') + (out(i) ? ' out' : '') + '" data-opt="' + escapeHtml(id)
+            + '" data-group="' + escapeHtml(group.nome) + '" data-value="' + escapeHtml(option) + '" aria-pressed="' + (option === value) + '"'
+            + (out(i) ? ' disabled title="Esgotado"' : '') + '>'
             + escapeHtml(option) + '</button>'
           ).join('')
           + '</div></div>';
@@ -1831,6 +1949,31 @@
         strong.textContent = value;
         label.appendChild(strong);
       });
+      const product = productById(id);
+      if (!product || !pricedGroupOf(product)) return;
+      document.querySelectorAll('[data-price-for]').forEach((el) => {
+        if (el.dataset.priceFor === id) el.innerHTML = priceHtml(product, selectedOpts[id]);
+      });
+      if (modalProductId === id) {
+        const stockEl = document.getElementById('sheet-stock');
+        const pool = stockPool(product, selectedOpts[id]);
+        const info = stockInfo(pricedIndex(pricedGroupOf(product), selectedOpts[id]) >= 0 ? pool.limit : totalStock(product));
+        if (stockEl) {
+          stockEl.className = 'prod-estoque ' + info.className;
+          stockEl.textContent = info.label;
+        }
+        syncModalQty();
+      } else {
+        const card = document.querySelector('.product-card[data-id="' + CSS.escape(id) + '"]');
+        if (card) {
+          const remaining = remainingToAdd(id, selectedOpts[id]);
+          selectedQty[id] = Math.max(1, Math.min(selectedQty[id] || 1, remaining || 1));
+          const qtyValue = card.querySelector('.quantity-value');
+          if (qtyValue) qtyValue.textContent = String(selectedQty[id]);
+          const inc = card.querySelector('[data-delta="1"]');
+          if (inc) inc.disabled = selectedQty[id] >= remaining;
+        }
+      }
     }
 
     function flagMissing(id, groupName) {
@@ -1852,10 +1995,10 @@
       }
       list.innerHTML = filtered.map((product) => {
         const id = String(product.id);
-        const stock = parseEstoque(product.estoque);
-        const price = parsePreco(product.preco);
+        const stock = totalStock(product);
+        const price = priceRange(product).min;
         const info = stockInfo(stock);
-        const remaining = remainingToAdd(id);
+        const remaining = remainingToAdd(id, selectedOpts[id]);
         const qty = Math.min(selectedQty[id] || 1, Math.max(remaining, 1));
         selectedQty[id] = remaining > 0 ? Math.min(qty, remaining) : 1;
         const soldOut = stock <= 0 || price <= 0;
@@ -1882,7 +2025,7 @@
             </div>
             <div class="prod-nome">${escapeHtml(product.nome || 'Produto')}</div>
             ${soldOut ? '' : optionsHtml(product)}
-            <div class="prod-preco">${price > 0 ? escapeHtml(formatMoney(price)) : 'Preço indisponível'}</div>
+            <div class="prod-preco" data-price-for="${escapeHtml(id)}">${priceHtml(product, selectedOpts[id])}</div>
             <div class="product-controls">${controls}
               <button type="button" class="details-btn" data-open="${escapeHtml(id)}">Ver detalhes</button>
             </div>
@@ -1952,7 +2095,7 @@
     }
 
     function changeQty(id, delta) {
-      const remaining = remainingToAdd(id);
+      const remaining = remainingToAdd(id, selectedOpts[id]);
       if (remaining <= 0) return;
       selectedQty[id] = Math.max(1, Math.min(remaining, (selectedQty[id] || 1) + delta));
       renderProducts();
@@ -1961,9 +2104,7 @@
     function addToCart(id, qty) {
       const product = productById(id);
       if (!product) return;
-      const stock = parseEstoque(product.estoque);
-      const price = parsePreco(product.preco);
-      if (stock <= 0 || price <= 0) return;
+      if (totalStock(product) <= 0 || priceRange(product).min <= 0) return;
       const addQty = qty == null ? (selectedQty[id] || 1) : Number(qty);
       if (!Number.isSafeInteger(addQty) || addQty < 1) return;
       const missing = missingGroup(product, selectedOpts[id]);
@@ -1975,8 +2116,11 @@
       const opts = normalizeOpts(product, selectedOpts[id]) || {};
       const opcoes = Object.keys(opts).length ? opts : null;
       const key = cartKey(id, opcoes);
-      if (qtyInCart(id) + addQty > stock) {
-        showToast('Quantidade maior que o estoque');
+      const price = unitPrice(product, opts);
+      if (price <= 0) return;
+      const pool = stockPool(product, opts);
+      if (qtyInPool(product, pool.key) + addQty > pool.limit) {
+        showToast(pool.limit <= 0 ? 'Essa opção está esgotada' : 'Quantidade maior que o estoque');
         return;
       }
       const existing = cart.find((item) => cartKey(item.id, item.opcoes) === key);
@@ -2016,8 +2160,10 @@
         removeFromCart(key);
         return;
       }
-      const stock = product ? parseEstoque(product.estoque) : 0;
-      if (product && delta > 0 && qtyInCart(id) + delta > stock) return;
+      if (product && delta > 0) {
+        const pool = stockPool(product, normalizeOpts(product, line.opcoes) || {});
+        if (qtyInPool(product, pool.key) + delta > pool.limit) return;
+      }
       line.qty = next;
       persistCart();
       updateCartCount();
@@ -2053,9 +2199,11 @@
       if (!product) return;
       modalProductId = id;
       modalQty = 1;
-      const price = parsePreco(product.preco);
-      const stock = parseEstoque(product.estoque);
-      const info = stockInfo(stock);
+      const price = priceRange(product).min;
+      const stock = totalStock(product);
+      const group = pricedGroupOf(product);
+      const info = stockInfo(group && pricedIndex(group, selectedOpts[String(id)]) >= 0
+        ? stockPool(product, selectedOpts[String(id)]).limit : stock);
       const desc = String(product.descricao || '').trim();
       document.getElementById('modal-produto-card').innerHTML = `
         <div class="sheet-photo">
@@ -2065,7 +2213,7 @@
           <button type="button" class="icon-close" data-close-product aria-label="Fechar">&times;</button>
           <h2 class="dialog-title" id="sheet-title">${escapeHtml(product.nome || 'Produto')}</h2>
           ${stock > 0 && price > 0 ? optionsHtml(product) : ''}
-          <div class="prod-preco">${price > 0 ? escapeHtml(formatMoney(price)) : 'Preço indisponível'}</div>
+          <div class="prod-preco" data-price-for="${escapeHtml(String(id))}">${priceHtml(product, selectedOpts[String(id)])}</div>
           <p class="sheet-desc">${desc ? escapeHtml(desc) : 'Sem descrição informada.'}</p>
           <p class="prod-estoque ${info.className}" id="sheet-stock">${escapeHtml(info.label)}</p>
           <div class="product-controls" id="sheet-controls"></div>
@@ -2080,9 +2228,12 @@
       const controls = document.getElementById('sheet-controls');
       const product = productById(modalProductId);
       if (!controls || !product) return;
-      const stock = parseEstoque(product.estoque);
-      const price = parsePreco(product.preco);
-      const remaining = remainingToAdd(modalProductId);
+      const opts = selectedOpts[String(modalProductId)];
+      const group = pricedGroupOf(product);
+      const chosenIndex = pricedIndex(group, opts);
+      const stock = chosenIndex >= 0 ? stockPool(product, opts).limit : totalStock(product);
+      const price = chosenIndex >= 0 ? unitPrice(product, opts) : priceRange(product).min;
+      const remaining = remainingToAdd(modalProductId, opts);
       if (stock <= 0 || price <= 0) {
         controls.innerHTML = '<button type="button" class="add-cart-btn" disabled>Esgotado</button>';
         return;
@@ -2619,7 +2770,7 @@
         cart = stored.map((entry) => {
           const product = productById(entry.id);
           if (!product) return entry;
-          const stock = parseEstoque(product.estoque);
+          const stock = stockPool(product, normalizeOpts(product, entry.opcoes) || {}).limit;
           if (stock <= 0) return entry;
           return { ...entry, qty: Math.min(entry.qty, stock) };
         });
@@ -2667,7 +2818,7 @@
         modalQty = Math.max(1, modalQty - 1);
         syncModalQty();
       } else if (event.target.closest('[data-modal-inc]')) {
-        const remaining = remainingToAdd(modalProductId);
+        const remaining = remainingToAdd(modalProductId, selectedOpts[String(modalProductId)]);
         modalQty = Math.min(remaining, modalQty + 1);
         syncModalQty();
       } else if (event.target.closest('[data-modal-add]')) addToCart(modalProductId, modalQty);
