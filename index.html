@@ -674,6 +674,12 @@
       text-transform: uppercase;
     }
 
+    /* display:flex acima anula o atributo hidden (o overlay já trata isso). */
+    .cart-subtotal[hidden],
+    .total-row[hidden] {
+      display: none !important;
+    }
+
     .fee-free { color: var(--verde); }
     .fee-note {
       margin-top: 8px;
@@ -1770,7 +1776,7 @@
     }
 
     function updateCartCount() {
-      const count = cart.reduce((sum, item) => sum + item.qty, 0);
+      const count = sanitizeCart(cart, productsReady).reduce((sum, item) => sum + item.qty, 0);
       document.getElementById('cart-count').textContent = String(count);
     }
 
@@ -1991,6 +1997,55 @@
       return values.length ? id + '|' + values.join('|') : id;
     }
 
+    // Lista, contador, subtotal e checkout usam só este carrinho limpo.
+    // Some id inválido, qty<=0, produto que saiu do catálogo e opção que não existe mais.
+    function sanitizeCart(entries, catalogReady) {
+      const merged = [];
+      const indexOf = (id, opcoes) => merged.findIndex((item) => cartKey(item.id, item.opcoes) === cartKey(id, opcoes));
+      (Array.isArray(entries) ? entries : []).forEach((item) => {
+        const id = item && item.id != null ? String(item.id) : '';
+        const qty = Number(item && item.qty);
+        if (!id || !Number.isSafeInteger(qty) || qty <= 0) return;
+        const rawOpts = item && item.opcoes && typeof item.opcoes === 'object' && !Array.isArray(item.opcoes)
+          ? Object.fromEntries(Object.entries(item.opcoes).map(([k, v]) => [String(k), String(v)]))
+          : null;
+        let opcoes = rawOpts && Object.keys(rawOpts).length ? rawOpts : null;
+        let keepQty = qty;
+        if (catalogReady) {
+          const product = productById(id);
+          if (!product) return;
+          const opts = normalizeOpts(product, opcoes);
+          if (opts === null) return;
+          opcoes = Object.keys(opts).length ? opts : null;
+          const pool = stockPool(product, opts);
+          if (pool.limit > 0) keepQty = Math.min(keepQty, pool.limit);
+        }
+        const existing = indexOf(id, opcoes);
+        if (existing >= 0) merged[existing].qty += keepQty;
+        else merged.push(opcoes ? { id, qty: keepQty, opcoes } : { id, qty: keepQty });
+      });
+      if (catalogReady) {
+        merged.forEach((item) => {
+          const product = productById(item.id);
+          if (!product) return;
+          const pool = stockPool(product, normalizeOpts(product, item.opcoes) || {});
+          if (pool.limit > 0) item.qty = Math.min(item.qty, pool.limit);
+        });
+      }
+      return merged;
+    }
+
+    function replaceCart(entries, catalogReady) {
+      cart = sanitizeCart(entries, catalogReady);
+      persistCart();
+      return cart;
+    }
+
+    function paintSubtotal(el) {
+      el.hidden = false;
+      el.innerHTML = '<span>Subtotal</span><strong>' + escapeHtml(formatMoney(cartSubtotal())) + '</strong>';
+    }
+
     function variantName(product, opts) {
       const base = product && product.nome ? String(product.nome) : 'Produto indisponível';
       const values = optValues(product, opts);
@@ -2141,8 +2196,8 @@
       box.replaceChildren();
       if (!cart.length) {
         empty.hidden = false;
-        subtotal.hidden = true;
         checkoutBtn.hidden = true;
+        paintSubtotal(subtotal);
         return;
       }
       empty.hidden = true;
@@ -2186,8 +2241,7 @@
         row.append(info, qty, remove);
         box.appendChild(row);
       });
-      subtotal.hidden = false;
-      subtotal.innerHTML = '<span>Subtotal</span><strong>' + escapeHtml(formatMoney(cartSubtotal())) + '</strong>';
+      paintSubtotal(subtotal);
       if (!document.getElementById('checkout-bg').hidden) renderCheckoutSummary();
     }
 
@@ -2770,11 +2824,11 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              cartItems: cart.map((item) => {
-                const payload = { id: item.id, quantity: item.qty };
-                if (item.opcoes) {
-                  payload.opcoes = item.opcoes;
-                  if (item.opcoes.Sabor) payload.sabor = item.opcoes.Sabor;
+              cartItems: cartLines().filter((line) => line.ok).map((line) => {
+                const payload = { id: line.id, quantity: line.qty };
+                if (line.opcoes) {
+                  payload.opcoes = line.opcoes;
+                  if (line.opcoes.Sabor) payload.sabor = line.opcoes.Sabor;
                 }
                 return payload;
               }),
@@ -2865,15 +2919,7 @@
         if (savedCategorias) categoriasLista = savedCategorias;
         produtos = snap.docs.map((docSnap) => ({ ...docSnap.data(), id: docSnap.id }));
         productsReady = true;
-        const stored = readStoredCart();
-        cart = stored.map((entry) => {
-          const product = productById(entry.id);
-          if (!product) return entry;
-          const stock = stockPool(product, normalizeOpts(product, entry.opcoes) || {}).limit;
-          if (stock <= 0) return entry;
-          return { ...entry, qty: Math.min(entry.qty, stock) };
-        });
-        persistCart();
+        replaceCart(cart.length ? cart : readStoredCart(), true);
         renderCategoryNav();
         renderProducts();
         updateCartCount();
@@ -3007,7 +3053,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-      cart = readStoredCart();
+      replaceCart(readStoredCart(), false);
       updateCartCount();
       renderFooter();
       checkPaymentStatus();
